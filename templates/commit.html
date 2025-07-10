@@ -1,0 +1,26 @@
+<html>
+<head><title>Commit {{ sha }}</title></head>
+<body>
+  <h1>git show {{ sha }}</h1>
+  {% if follows %}
+    <p><em>{{ follows.raw }}</em></p>
+  {% end %}
+  {% if follows or precedes %}
+    <p>
+      {% if follows %}
+        <strong>Follows:</strong>
+        {{ follows.base_tag }}
+        (<a href="/commit/{{ follows.tag_sha }}">{{ follows.tag_sha[:7] }}</a>)
+      {% end %}
+      {% if precedes %}
+        <strong>Precedes:</strong>
+        {{ precedes.base_tag }}
+        (<a href="/commit/{{ precedes.tag_sha }}">{{ precedes.tag_sha[:7] }}</a>)
+      {% end %}
+    </p>
+  {% end %}
+  <pre>{{ output }}</pre>
+
+  <a href="/">Back</a>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<html>
+<head><title>Commits</title></head>
+<body>
+  <table border="1">
+    <tr>
+      <th>id</th><th>sha</th><th>release</th><th>message</th><th>date</th>
+    </tr>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row["id"] }}</td>
+      <td><a href="/commit/{{ row["sha"] }}">{{ row["sha"][:7] }}</a></td>
+      <td>{{ row["release"] }}</td>
+      <td>{{ row["message"] }}</td>
+      <td>{{ row["author_date"] }}</td>
+    </tr>
+    {% end %}
+  </table>
+</body>
+</html>
