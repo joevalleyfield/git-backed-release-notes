@@ -21,7 +21,7 @@ Possibilities include:
   git merge-base --is-ancestor <commit> <tag>
 ```
 
-- [ ] Verify that the tag is included in `git tag --list "<pattern>"`
+- [X] Verify that the tag is included in `git tag --list "<pattern>"`
 - [ ] Add debugging output or logs inside `find_precedes_tag()`
 - [ ] Consider caching `rev-list` and tag lookup for performance
 
@@ -34,3 +34,4 @@ Possibilities include:
 
 2025.07.10.Th
 ✅ Confirmed that git merge-base --is-ancestor returns 0, meaning the tag is a descendant.
+✅ Confirmed that git rel-4-23-0 is returned by git tag --list "rel-*".
