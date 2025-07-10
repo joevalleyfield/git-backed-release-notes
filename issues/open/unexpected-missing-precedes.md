@@ -15,7 +15,7 @@ Possibilities include:
 
 ## Next Steps
 
-- [ ] Confirm that the descendant tag SHA is truly a descendant of the commit using:
+- [X] Confirm that the descendant tag SHA is truly a descendant of the commit using:
 
 ```bash
   git merge-base --is-ancestor <commit> <tag>
@@ -29,3 +29,8 @@ Possibilities include:
 
 - Commit: `a34e7e8263a3b4a09a0b3b1661bf8a549c636f5e`
 - Expected `Precedes:`: `rel-4-23-0`
+
+## Comments
+
+2025.07.10.Th
+✅ Confirmed that git merge-base --is-ancestor returns 0, meaning the tag is a descendant.
