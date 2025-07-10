@@ -30,6 +30,10 @@ Possibilities include:
 - Commit: `a34e7e8263a3b4a09a0b3b1661bf8a549c636f5e`
 - Expected `Precedes:`: `rel-4-23-0`
 
+## Related Issues
+
+- [`add-debug-output-to-precedes-search`](add-debug-output-to-precedes-search.md)
+
 ## Comments
 
 2025.07.10.Th
