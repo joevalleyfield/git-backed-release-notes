@@ -25,3 +25,7 @@ Introduce automated end-to-end tests to validate:
 - Start web app on localhost in fixture
 - Load minimal sample data
 - Validate index and commit routes
+
+## Related Issues
+
+- `add-behave-end-to-end-tests.md`
