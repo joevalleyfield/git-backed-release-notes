@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import fnmatch
+import logging
 import re
 import subprocess
 from types import SimpleNamespace
@@ -18,6 +19,9 @@ from types import SimpleNamespace
 import pandas as pd
 from tornado.web import Application, RequestHandler
 from tornado.ioloop import IOLoop
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())  # safe default
 
 
 class MainHandler(RequestHandler):
@@ -74,6 +78,7 @@ class CommitHandler(RequestHandler):
             - count: commits since tag
             - tag_sha: SHA of the base tag's commit
         """
+        logger.debug("Resolving Follows tag for commit: %s", sha)
         try:
             result = subprocess.run(
                 [
@@ -102,6 +107,13 @@ class CommitHandler(RequestHandler):
                     check=True,
                 ).stdout.strip()
 
+                logger.debug(
+                    "Parsed describe output: base_tag=%s, count=%s", base_tag, count
+                )
+                logger.debug(
+                    "Resolved base_tag '%s' to commit SHA: %s", base_tag, tag_sha
+                )
+
                 return SimpleNamespace(
                     raw=raw, base_tag=base_tag, count=int(count), tag_sha=tag_sha
                 )
@@ -114,10 +126,13 @@ class CommitHandler(RequestHandler):
                     cwd=self.repo_path,
                     check=True,
                 ).stdout.strip()
+                logger.debug("Commit %s is directly tagged with '%s'", sha, raw)
+                logger.debug("Resolved tag '%s' to commit SHA: %s", raw, tag_sha)
 
                 return SimpleNamespace(raw=raw, base_tag=raw, count=0, tag_sha=tag_sha)
-        except subprocess.CalledProcessError:
-            return None
+
+        except subprocess.CalledProcessError as e:
+            logger.debug("git describe failed for commit %s: %s", sha, e)
 
     def find_precedes_tag(self, sha):
         """
@@ -129,6 +144,8 @@ class CommitHandler(RequestHandler):
             - base_tag: tag name
             - tag_sha: SHA of the tag's commit
         """
+        logger.debug("Resolving Precedes tag for commit: %s", sha)
+
         try:
             tag_lines = (
                 subprocess.run(
@@ -147,13 +164,37 @@ class CommitHandler(RequestHandler):
                 .splitlines()
             )
 
-            tag_shas = {
-                line.split()[1]: line.split()[0]
-                for line in tag_lines
-                if fnmatch.fnmatch(
-                    line.split()[0], self.application.settings["tag_pattern"]
-                )
-            }
+            pattern = self.application.settings["tag_pattern"]
+            # tag_shas = {
+            #     line.split()[1]: line.split()[0]
+            #     for line in tag_lines
+            #     if fnmatch.fnmatch(line.split()[0], pattern)
+            # }
+
+            # Map tag name -> SHA of the *commit* the tag refers to
+            tag_shas = {}
+            for line in tag_lines:
+                parts = line.split()
+                tag_name = parts[0]
+                if fnmatch.fnmatch(tag_name, pattern):
+                    tag_commit_sha = subprocess.run(
+                        ["git", "rev-list", "-n", "1", tag_name],
+                        capture_output=True,
+                        text=True,
+                        cwd=self.repo_path,
+                        check=True,
+                    ).stdout.strip()
+                    tag_shas[tag_commit_sha] = tag_name
+
+            logger.debug("Collected %d total tags", len(tag_lines))
+            logger.debug(
+                "Filtered %d matching tags for pattern '%s'",
+                len(tag_shas),
+                pattern,
+            )
+
+            for tag_commit_sha, tag in tag_shas.items():
+                logger.debug("Available tag: %s -> %s", tag, tag_commit_sha)
 
             if not tag_shas:
                 return None
@@ -170,18 +211,57 @@ class CommitHandler(RequestHandler):
                 .splitlines()
             )
 
+            logger.debug("rev-list contains %d commits", len(rev_list))
+            if sha not in rev_list:
+                logger.debug(
+                    "Commit %s not found in rev-list --topo-order --reverse", sha
+                )
+
             try:
                 i = rev_list.index(sha)
             except ValueError:
                 return None
 
             for descendant_sha in rev_list[i + 1 :]:
+                logger.debug("Checking descendant SHA: %s", descendant_sha)
+
                 if descendant_sha in tag_shas:
+                    # Verify this is truly a descendant, not an ancestor or unrelated
+                    logger.debug(
+                        "Running: git merge-base --is-ancestor %s %s",
+                        descendant_sha,
+                        sha,
+                    )
+                                        
+                    is_ancestor = subprocess.run(
+                        ["git", "merge-base", "--is-ancestor", descendant_sha, sha],
+                        cwd=self.repo_path,
+                        check=False,
+                    ).returncode == 0
+
+                    if is_ancestor:
+                        logger.debug(
+                            "Skipping tag SHA %s — it's actually an ancestor of %s",
+                            descendant_sha,
+                            sha,
+                        )
+                        continue
+
                     tag = tag_shas[descendant_sha]
+                    logger.debug(
+                        "Found descendant tag: %s at SHA: %s", tag, descendant_sha
+                    )
+
                     return SimpleNamespace(base_tag=tag, tag_sha=descendant_sha)
-        except subprocess.SubprocessError:
+
+            logger.debug("No matching Precedes tag found for commit: %s", sha)
+
+
+        except subprocess.SubprocessError as e:
             # Likely due to tag lookup or invalid rev-list index
-            return None
+            logger.debug(
+                "Subprocess error during precedes resolution for %s: %s", sha, e
+            )
 
         return None
 
@@ -261,7 +341,15 @@ def main():
     parser.add_argument(
         "--tag-pattern", default="rel-*", help="Pattern for release tags"
     )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+
     args = parser.parse_args()
+    if args.debug:
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
 
     df = pd.read_excel(args.excel_path).fillna("")
 

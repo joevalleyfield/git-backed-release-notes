@@ -22,8 +22,7 @@ Possibilities include:
 ```
 
 - [X] Verify that the tag is included in `git tag --list "<pattern>"`
-- [ ] Add debugging output or logs inside `find_precedes_tag()`
-- [ ] Consider caching `rev-list` and tag lookup for performance
+- [X] Add debugging output or logs inside `find_precedes_tag()`
 
 ## Affected Example(s)
 
@@ -33,6 +32,9 @@ Possibilities include:
 ## Related Issues
 
 - [`add-debug-output-to-precedes-search`](add-debug-output-to-precedes-search.md)
+
+## Possible Follow-on
+- Consider caching `rev-list` and tag lookup for performance
 
 ## Comments
 
