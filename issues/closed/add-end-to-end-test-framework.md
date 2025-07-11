@@ -29,3 +29,18 @@ Introduce automated end-to-end tests to validate:
 ## Related Issues
 
 - `add-behave-end-to-end-tests.md`
+
+## Comments
+
+### 2025.07.11.Fr
+
+Initial framework is now in place:
+
+- Behave + requests drive full-stack server tests
+- Fixtures start the app server and inject test repos
+- Commit detail and tag logic now covered via Gherkin
+
+This issue’s broader intent is fulfilled via add-behave-end-to-end-tests.md, now closed.
+Remaining enhancements (CLI tests, issue interactions, UI automation) will be tracked separately if pursued.
+
+Closing to reflect current scope.

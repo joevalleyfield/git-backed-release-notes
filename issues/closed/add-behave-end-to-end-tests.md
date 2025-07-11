@@ -66,3 +66,14 @@ Planned feature test files and their purpose:
 - Updated next steps to include tasks for better coverage.
 
 - Checked off commit details and follows/precedes tests.
+
+Feature tests now cover:
+
+- Index route
+
+- Commit detail
+
+- Follows/Precedes logic including tag and SHA resolution
+
+We’re closing this issue to avoid expanding its scope into unrelated areas.
+Regression tests for tag edge cases and issue-link rendering will be introduced alongside those features.
