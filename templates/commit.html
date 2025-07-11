@@ -7,7 +7,7 @@
   {% end %}
   {% if follows or precedes %}
     <p>
-      {% if follows %}
+      {% if follows and follows.count > 0 %}
         <strong>Follows:</strong>
         {{ follows.base_tag }}
         (<a href="/commit/{{ follows.tag_sha }}">{{ follows.tag_sha[:7] }}</a>)

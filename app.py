@@ -96,7 +96,7 @@ class CommitHandler(RequestHandler):
             )
             raw = result.stdout.strip()
 
-            m = re.match(r"(.+)-(\d+)-g([0-9a-f]{7,})", raw)
+            m: re.Match[str] | None = re.match(r"(.+)-(\d+)-g([0-9a-f]{7,})", raw)
             if m:
                 base_tag, count, _ = m.groups()
                 tag_sha = subprocess.run(
@@ -119,20 +119,16 @@ class CommitHandler(RequestHandler):
                 )
             else:
                 # Directly tagged
-                tag_sha = subprocess.run(
-                    ["git", "rev-list", "-n", "1", raw],
-                    capture_output=True,
-                    text=True,
-                    cwd=self.repo_path,
-                    check=True,
-                ).stdout.strip()
-                logger.debug("Commit %s is directly tagged with '%s'", sha, raw)
-                logger.debug("Resolved tag '%s' to commit SHA: %s", raw, tag_sha)
-
-                return SimpleNamespace(raw=raw, base_tag=raw, count=0, tag_sha=tag_sha)
+                logger.debug(
+                    "Commit %s is directly tagged with '%s'; omitting Follows", sha, raw
+                )
+                return SimpleNamespace(
+                    raw=raw, base_tag=raw, count=0, tag_sha=sha  # The commit itself
+                )
 
         except subprocess.CalledProcessError as e:
             logger.debug("git describe failed for commit %s: %s", sha, e)
+            return None
 
     def find_precedes_tag(self, sha):
         """
@@ -232,7 +228,7 @@ class CommitHandler(RequestHandler):
                         descendant_sha,
                         sha,
                     )
-                                        
+
                     is_ancestor = subprocess.run(
                         ["git", "merge-base", "--is-ancestor", descendant_sha, sha],
                         cwd=self.repo_path,
@@ -255,7 +251,6 @@ class CommitHandler(RequestHandler):
                     return SimpleNamespace(base_tag=tag, tag_sha=descendant_sha)
 
             logger.debug("No matching Precedes tag found for commit: %s", sha)
-
 
         except subprocess.SubprocessError as e:
             # Likely due to tag lookup or invalid rev-list index

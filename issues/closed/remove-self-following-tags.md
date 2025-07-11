@@ -17,3 +17,8 @@ If the result of `git describe` is just the tag name (i.e. no `-<count>-g<sha>` 
 
 - This supports the goal of cleaner, non-redundant commit detail views
 - Builds on previous improvements to `git describe` parsing and logging
+
+## Resolution
+
+- If a commit is directly tagged (`count == 0`), the Follows line is omitted
+- The `git describe` string is still shown in italics as context
