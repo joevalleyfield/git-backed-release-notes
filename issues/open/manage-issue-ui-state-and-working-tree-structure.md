@@ -62,3 +62,4 @@ This directory can contain:
 ## Related Features
 
 - `display-issue-slugs-in-index.md`
+- `dogfooding-no-spreadsheet-mode.md`
