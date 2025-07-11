@@ -4,32 +4,74 @@ This module sets up a temporary Git repository and .xlsx input file,
 launches the Tornado app server before all tests, and tears everything down after.
 """
 
-import os
+from pathlib import Path
 import socket
 import subprocess
 import tempfile
 import time
+from types import SimpleNamespace
+
 
 import pandas as pd
 
 
-def is_port_open(host, port):
-    """Return True if the given host:port is accepting TCP connections."""
-    with socket.socket() as sock:
-        return sock.connect_ex((host, port)) == 0
+def init_repo(repo_path: Path) -> None:
+    """Initialize a new Git repository at the given path."""
+
+    subprocess.run(["git", "init"], cwd=repo_path, check=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"], cwd=repo_path, check=True
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"], cwd=repo_path, check=True
+    )
 
 
-def before_all(context):
-    """Set up test data and launch the app server before any tests run.
-
-    Creates:
-    - Temporary .xlsx file with minimal commit metadata
-    - Temporary Git repository with a single tagged commit
-    - Starts app server pointing at both
+def create_commit(repo_path: Path, message: str) -> str:
     """
-    # Step 1: Create .xlsx file
-    context.data_dir = tempfile.TemporaryDirectory()
-    xlsx_path = os.path.join(context.data_dir.name, "test_data.xlsx")
+    Create a new commit in the repository with the given commit message.
+
+    Returns:
+        str: The SHA of the created commit.
+    """
+
+    with open(repo_path / "file.txt", "a", encoding="utf-8") as f:
+        f.write(f"{message}\n")
+    subprocess.run(["git", "add", "."], cwd=repo_path, check=True)
+    subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True)
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+
+
+def tag_commit(repo_path: Path, sha: str, tag_name: str) -> None:
+    """
+    Create a lightweight tag pointing to the specified commit.
+
+    Args:
+        sha (str): The SHA of the commit to tag.
+        tag (str): The name of the tag to create.
+    """
+
+    subprocess.run(["git", "tag", tag_name, sha], cwd=repo_path, check=True)
+
+
+def create_xlsx_file(data_dir: Path) -> Path:
+    """
+    Create a minimal Excel (.xlsx) file with one row of commit metadata.
+
+    Args:
+        data_dir (Path): Full to create the file in.
+
+    Returns:
+        Path: The path to the created file.
+    """
+    data_dir.mkdir(parents=True, exist_ok=True)
+    xlsx_path = data_dir / "test_data.xlsx"
 
     df = pd.DataFrame(
         [
@@ -47,42 +89,98 @@ def before_all(context):
         ]
     )
     df.to_excel(xlsx_path, index=False)
-    context.xlsx_path = xlsx_path
+    return xlsx_path
 
-    # Step 2: Create fixture git repo
-    context.repo_dir = tempfile.TemporaryDirectory()
-    repo_path = context.repo_dir.name
 
-    subprocess.run(["git", "init"], cwd=repo_path, check=True)
-    with open(os.path.join(repo_path, "README.md"), "w", encoding="utf-8") as f:
-        f.write("# Test Repo\n")
+def is_port_open(host, port):
+    """Return True if the given host:port is accepting TCP connections."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(0.5)
+        return sock.connect_ex((host, port)) == 0
 
-    subprocess.run(["git", "add", "README.md"], cwd=repo_path, check=True)
-    subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=repo_path, check=True)
-    subprocess.run(["git", "tag", "rel-0-1"], cwd=repo_path, check=True)
 
-    context.fixture_repo = repo_path
+def launch_server(xlsx_path: Path, repo_path: Path, port: int = 8888) -> subprocess.Popen:
+    """
+    Start the app server as a subprocess and wait for it to become available.
 
-    # Step 3: Start the app server
-    context.server_proc = subprocess.Popen(
-        ["python", "app.py", xlsx_path, "--repo", repo_path],
+    Returns:
+        subprocess.Popen: The running server process.
+    """
+    proc = subprocess.Popen(
+        ["python", "app.py", str(xlsx_path), "--repo", str(repo_path)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
 
     for _ in range(50):
-        if is_port_open("localhost", 8888):
+        if is_port_open("localhost", port):
             break
         time.sleep(0.1)
     else:
+        proc.terminate()
+        proc.wait()
         raise RuntimeError("Server did not start in time")
 
+    return proc
+
+
+def create_fixture_repo(repo_path):
+    """
+    Initialize fixture repo with three commits and tags.
+
+    Returns:
+        SimpleNamespace with:
+        - shas: list of commit SHAs [initial, middle, latest]
+        - tag_to_sha: dict mapping tag names to SHAs
+    """
+    init_repo(repo_path)
+
+    sha_a = create_commit(repo_path, "First commit (tagged)")
+    tag_commit(repo_path, sha_a, "rel-0.1")
+
+    sha_b = create_commit(repo_path, "Second commit (middle)")
+
+    sha_c = create_commit(repo_path, "Third commit (latest)")
+    tag_commit(repo_path, sha_c, "rel-0.2")
+
+    return SimpleNamespace(
+        shas=[sha_a, sha_b, sha_c], tag_to_sha={"rel-0.1": sha_a, "rel-0.2": sha_c}
+    )
+
+
+def before_all(context):
+    """Set up test data and launch the app server before any tests run.
+
+    Creates:
+    - Temporary .xlsx file with minimal commit metadata
+    - Temporary Git repository with a single tagged commit
+    - Starts app server pointing at both
+    """
+
+    # Setup temporary directory
+    context.tmp_dir_obj = tempfile.TemporaryDirectory()
+    context.tmp_dir = Path(context.tmp_dir_obj.name)
+
+    context.repo_path = context.tmp_dir / "repo"
+    context.xlsx_path = create_xlsx_file(context.tmp_dir)
+
+    # Create repo and commit
+    context.repo_path.mkdir()
+    context.fixture_repo = create_fixture_repo(repo_path=context.repo_path)
+
+    # Create xlsx file
+    context.xlsx_path = create_xlsx_file(context.tmp_dir)
+
+    # Start the server
+    context.server_proc = launch_server(context.xlsx_path, context.repo_path)
     context.base_url = "http://localhost:8888"
 
 
 def after_all(context):
-    """Shut down the app server and clean up temporary files."""
-    context.server_proc.terminate()
-    context.server_proc.wait()
-    context.repo_dir.cleanup()
-    context.data_dir.cleanup()
+    """Clean up the server process and temp directories."""
+    if hasattr(context, "server_proc"):
+        context.server_proc.terminate()
+        context.server_proc.wait()
+
+    if hasattr(context, "tmp_dir_obj"):
+        context.tmp_dir_obj.cleanup()

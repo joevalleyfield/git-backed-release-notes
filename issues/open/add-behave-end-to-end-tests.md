@@ -40,11 +40,11 @@ Planned feature test files and their purpose:
 - [X] Add `index.feature` to verify index route and headings
 - [X] Define initial `steps/index_steps.py`
 - [X] Include a `test_server_is_running` scenario for baseline sanity
+- [X] Add scenario for viewing commit details (`/commit/<sha>`)
+- [X] Add test coverage for `follows` and `precedes` logic
 
 ## Next Steps
 
-- [ ] Add scenario for viewing commit details (`/commit/<sha>`)
-- [ ] Add test coverage for `follows` and `precedes` logic
 - [ ] Add test for issue-linking via `issue` column
 - [ ] Add regression scenario for commits with no matching precedes
 - [ ] Add regression scenario for directly tagged commits (count == 0)
@@ -64,3 +64,5 @@ Planned feature test files and their purpose:
 - Automated server startup and added fixture for repo and xlsx
 
 - Updated next steps to include tasks for better coverage.
+
+- Checked off commit details and follows/precedes tests.
