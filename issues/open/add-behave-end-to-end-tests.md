@@ -44,29 +44,14 @@ Create test features such as:
 
 - Later: test flows with temporary repo or dataset injected via fixture
 
-## Goal
-
-Enable end-to-end tests to start the server automatically with a temporary fixture repo, eliminating the need for manual startup and shared local repo state.
-
-## Tasks
-
-- [ ] Create a minimal Git repo fixture (`.git` + 1–2 commits and tags)
-- [ ] Launch the Tornado app server in a subprocess from `before_all`
-- [ ] Pass fixture repo path as CLI arg to app
-- [ ] Wait for server readiness before tests proceed
-- [ ] Shut down server after all tests complete
-- [ ] Clean up temp repo directory
-
-## Motivation
-
-This lays the foundation for reproducible, self-contained end-to-end tests.
-
 ## Related Features
 
-- `automate-server-startup-and-fixture-repo.md`
+- [`automate-server-startup-and-fixture-repo.md`](../closed/automate-server-startup-and-fixture-repo.md)
 
 ## Comments
 
 ### 2025.07.11.Fr
 
-Initial feature test (`index.feature`) and steps file added. Root page loads and contains expected content (assuming user/tester manually started the app server).
+- Initial feature test (`index.feature`) and steps file added. Root page loads and contains expected content (assuming user/tester manually started the app server).
+
+- Automated server startup and added fixture for repo and xlsx
