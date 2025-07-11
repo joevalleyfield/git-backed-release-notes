@@ -1,3 +1,4 @@
+@requires_remediation_fixture
 Feature: View commit index
 
   Scenario: User loads the main commit index

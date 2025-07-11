@@ -1,3 +1,4 @@
+@requires_remediation_fixture
 Feature: Commit Detail Page
 
   Scenario Outline: Commit detail shows correct follows and precedes

@@ -161,6 +161,7 @@ def before_all(context):
     context.tmp_dir_obj = tempfile.TemporaryDirectory()
     context.tmp_dir = Path(context.tmp_dir_obj.name)
 
+def get_remediation_fixture(context):
     context.repo_path = context.tmp_dir / "repo"
     context.xlsx_path = create_xlsx_file(context.tmp_dir)
 
@@ -174,6 +175,27 @@ def before_all(context):
     # Start the server
     context.server_proc = launch_server(context.xlsx_path, context.repo_path)
     context.base_url = "http://localhost:8888"
+
+
+def get_dogfood_fixture(context):
+    context.repo_path = Path.cwd()
+    context.xlsx_path = None
+    context.server_proc = launch_server(None, context.repo_path)
+    context.base_url = "http://localhost:8888"
+
+    # Pull a few SHAs for test assertions
+    log = subprocess.check_output(
+        ["git", "-C", str(context.repo_path), "log", "--format=%H", "-n", "5"],
+        text=True,
+    )
+    context.expected_shas = log.strip().splitlines()
+
+def before_feature(context, feature):
+    """Dispatch to required fixtures based on tags."""
+    if "requires_remediation_fixture" in feature.tags:
+        get_remediation_fixture(context)
+    elif "requires_dogfood_fixture" in feature.tags:
+        get_dogfood_fixture(context)
 
 
 def after_all(context):
