@@ -34,9 +34,18 @@ Create test features such as:
 - `features/issue_links.feature`  
   Verifies that issue slugs (if present) render as links
 
+## Completed
+
+- [X] Add `features/` directory and basic `index.feature`
+- [X] Define initial `steps/index_steps.py`
+- [X] Include a `test_server_is_running` scenario for baseline sanity
+
 ## Next Steps
 
-- Add `features/` directory and basic `index.feature`
-- Define initial `steps/index_steps.py`
-- Optionally include a `test_server_is_running` scenario for baseline sanity
 - Later: test flows with temporary repo or dataset injected via fixture
+
+## Comments
+
+### 2025.07.11.Fr
+
+Initial feature test (`index.feature`) and steps file added. Root page loads and contains expected content (assuming user/tester manually started the app server).
