@@ -350,7 +350,8 @@ def main():
 
     app = make_app(df, args.repo, args.tag_pattern)
     app.listen(8888)
-    print("Server running at http://localhost:8888")
+    print("Server running at http://localhost:8888", flush=True)
+
     IOLoop.current().start()
 
 

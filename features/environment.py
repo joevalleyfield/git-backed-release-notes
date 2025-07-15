@@ -7,7 +7,6 @@ launches the Tornado app server before all tests, and tears everything down afte
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-import socket
 import subprocess
 import tempfile
 import threading
@@ -78,13 +77,15 @@ class ServerProcess:
         threading.Thread(target=reader, args=(proc.stdout, stdout), daemon=True).start()
         threading.Thread(target=reader, args=(proc.stderr, stderr), daemon=True).start()
 
-        for _ in range(50):
-            if is_port_open("localhost", port):
-                break
-            time.sleep(0.1)
-        else:
+        try:
+            wait_for_server_ready(proc, stdout, stderr)
+        except Exception:
             proc.terminate()
-            raise RuntimeError("Server did not start in time")
+            try:
+                proc.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+            raise
 
         return cls(
             proc=proc, stdout=stdout, stderr=stderr, base_url=f"http://localhost:{port}"
@@ -104,7 +105,7 @@ class ServerFarm:
         """Get or launch a server for the given mode."""
         if mode not in self.servers:
             port = self._next_port()
-            use_xlsx = (mode == "xlsx")
+            use_xlsx = mode == "xlsx"
             server = ServerProcess.launch(
                 self.xlsx_path if use_xlsx else None,
                 self.repo_path,
@@ -196,6 +197,11 @@ def before_all(context):
 
 
 def before_scenario(context, scenario):
+    """Behave hook: Selects and launches the appropriate server fixture for the test.
+
+    Chooses between server modes (e.g. with or without .xlsx file) based on scenario tags.
+    The server is launched lazily via context.server_farm.get(mode).
+    """
     mode = "xlsx" if "with_xlsx" in scenario.effective_tags else "no_xlsx"
     context.server = context.server_farm.get(mode)
 
@@ -272,9 +278,30 @@ def create_xlsx_file(data_dir: Path) -> Path:
     return xlsx_path
 
 
-def is_port_open(host, port):
-    """Check whether the specified host:port is accepting TCP connections."""
+def wait_for_server_ready(proc, stdout_buf, stderr_buf, max_attempts=50, interval=0.1):
+    """Waits for the server process to print its readiness signal to stdout.
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.settimeout(0.5)
-        return sock.connect_ex((host, port)) == 0
+    Monitors the process's stdout buffer for a known readiness message.
+    Fails early if the process exits or if the timeout (max_attempts × interval) is exceeded.
+
+    Args:
+        proc: The subprocess.Popen object for the server.
+        stdout_buf: A StringIO capturing the server's stdout.
+        stderr_buf: A StringIO capturing the server's stderr.
+        max_attempts: Maximum number of polling attempts (default: 50).
+        interval: Time in seconds between polling attempts (default: 0.1).
+
+    Raises:
+        RuntimeError: If the server exits prematurely or fails to signal readiness.
+    """
+    for _ in range(max_attempts):
+        time.sleep(interval)
+        if "Server running at http://localhost" in stdout_buf.getvalue():
+            return
+        if proc.poll() is not None:
+            raise RuntimeError(
+                f"Server exited early with code {proc.returncode}\n"
+                f"STDOUT:\n{stdout_buf.getvalue()[-1000:]}\n"
+                f"STDERR:\n{stderr_buf.getvalue()[-1000:]}"
+            )
+    raise RuntimeError("Server did not signal readiness in time")
