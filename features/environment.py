@@ -11,12 +11,90 @@ import tempfile
 import time
 from types import SimpleNamespace
 
+from behave import fixture, use_fixture
 
 import pandas as pd
 
 
+# --- FIXTURES ---
+
+
+@fixture
+def temp_directory(context, **_kwargs):
+    """Create and register a temporary directory on the context."""
+
+    context.tmp_dir_obj = tempfile.TemporaryDirectory()
+    context.tmp_dir = Path(context.tmp_dir_obj.name)
+    yield context.tmp_dir
+    context.tmp_dir_obj.cleanup()
+
+
+@fixture
+def git_repo(context, **_kwargs):
+    """Initialize a Git repo with three commits and two tags."""
+
+    repo_path = context.tmp_dir / "repo"
+    repo_path.mkdir()
+    init_repo(repo_path)
+
+    sha_a = create_commit(repo_path, "First commit (tagged)")
+    tag_commit(repo_path, sha_a, "rel-0.1")
+    sha_b = create_commit(repo_path, "Second commit (middle)")
+    sha_c = create_commit(repo_path, "Third commit (latest)")
+    tag_commit(repo_path, sha_c, "rel-0.2")
+
+    context.repo_path = repo_path
+    context.fixture_repo = SimpleNamespace(
+        shas=[sha_a, sha_b, sha_c], tag_to_sha={"rel-0.1": sha_a, "rel-0.2": sha_c}
+    )
+    yield repo_path
+
+
+@fixture
+def xlsx_file(context, **_kwargs):
+    """Create and register a minimal .xlsx file on the context."""
+
+    path = create_xlsx_file(context.tmp_dir)
+    context.xlsx_path = path
+    yield path
+
+
+@fixture
+def app_server(context, **_kwargs):
+    """Launch the app server and tear it down after use."""
+
+    proc = launch_server(context.xlsx_path, context.repo_path)
+    context.server_proc = proc
+    context.base_url = "http://localhost:8888"
+    yield proc
+    proc.terminate()
+    proc.wait()
+
+
+@fixture
+def composite_fixture(context, **_kwargs):
+    """Run all core setup fixtures: temp directory, Git repo, xlsx file, and app server."""
+
+    use_fixture(temp_directory, context)
+    use_fixture(git_repo, context)
+    use_fixture(xlsx_file, context)
+    use_fixture(app_server, context)
+
+
+# --- BEHAVE HOOKS ---
+
+
+def before_all(context):
+    """Apply the composite fixture at the start of the test suite."""
+
+    use_fixture(composite_fixture, context)
+
+
+# --- UTILITY FUNCTIONS ---
+
+
 def init_repo(repo_path: Path) -> None:
-    """Initialize a new Git repository at the given path."""
+    """Initialize a Git repository with user config."""
 
     subprocess.run(["git", "init"], cwd=repo_path, check=True)
     subprocess.run(
@@ -28,12 +106,7 @@ def init_repo(repo_path: Path) -> None:
 
 
 def create_commit(repo_path: Path, message: str) -> str:
-    """
-    Create a new commit in the repository with the given commit message.
-
-    Returns:
-        str: The SHA of the created commit.
-    """
+    """Create a commit with the given message and return its SHA."""
 
     with open(repo_path / "file.txt", "a", encoding="utf-8") as f:
         f.write(f"{message}\n")
@@ -49,30 +122,16 @@ def create_commit(repo_path: Path, message: str) -> str:
 
 
 def tag_commit(repo_path: Path, sha: str, tag_name: str) -> None:
-    """
-    Create a lightweight tag pointing to the specified commit.
-
-    Args:
-        sha (str): The SHA of the commit to tag.
-        tag (str): The name of the tag to create.
-    """
+    """Create a lightweight tag pointing to the specified commit SHA."""
 
     subprocess.run(["git", "tag", tag_name, sha], cwd=repo_path, check=True)
 
 
 def create_xlsx_file(data_dir: Path) -> Path:
-    """
-    Create a minimal Excel (.xlsx) file with one row of commit metadata.
+    """Generate a minimal Excel file with dummy commit metadata."""
 
-    Args:
-        data_dir (Path): Full to create the file in.
-
-    Returns:
-        Path: The path to the created file.
-    """
     data_dir.mkdir(parents=True, exist_ok=True)
     xlsx_path = data_dir / "test_data.xlsx"
-
     df = pd.DataFrame(
         [
             {
@@ -93,25 +152,23 @@ def create_xlsx_file(data_dir: Path) -> Path:
 
 
 def is_port_open(host, port):
-    """Return True if the given host:port is accepting TCP connections."""
+    """Check whether the specified host:port is accepting TCP connections."""
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.settimeout(0.5)
         return sock.connect_ex((host, port)) == 0
 
 
-def launch_server(xlsx_path: Path, repo_path: Path, port: int = 8888) -> subprocess.Popen:
-    """
-    Start the app server as a subprocess and wait for it to become available.
+def launch_server(
+    xlsx_path: Path, repo_path: Path, port: int = 8888
+) -> subprocess.Popen:
+    """Start the app server subprocess and wait until it is accepting connections."""
 
-    Returns:
-        subprocess.Popen: The running server process.
-    """
     proc = subprocess.Popen(
         ["python", "app.py", str(xlsx_path), "--repo", str(repo_path)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-
     for _ in range(50):
         if is_port_open("localhost", port):
             break
@@ -120,67 +177,4 @@ def launch_server(xlsx_path: Path, repo_path: Path, port: int = 8888) -> subproc
         proc.terminate()
         proc.wait()
         raise RuntimeError("Server did not start in time")
-
     return proc
-
-
-def create_fixture_repo(repo_path):
-    """
-    Initialize fixture repo with three commits and tags.
-
-    Returns:
-        SimpleNamespace with:
-        - shas: list of commit SHAs [initial, middle, latest]
-        - tag_to_sha: dict mapping tag names to SHAs
-    """
-    init_repo(repo_path)
-
-    sha_a = create_commit(repo_path, "First commit (tagged)")
-    tag_commit(repo_path, sha_a, "rel-0.1")
-
-    sha_b = create_commit(repo_path, "Second commit (middle)")
-
-    sha_c = create_commit(repo_path, "Third commit (latest)")
-    tag_commit(repo_path, sha_c, "rel-0.2")
-
-    return SimpleNamespace(
-        shas=[sha_a, sha_b, sha_c], tag_to_sha={"rel-0.1": sha_a, "rel-0.2": sha_c}
-    )
-
-
-def before_all(context):
-    """Set up test data and launch the app server before any tests run.
-
-    Creates:
-    - Temporary .xlsx file with minimal commit metadata
-    - Temporary Git repository with a single tagged commit
-    - Starts app server pointing at both
-    """
-
-    # Setup temporary directory
-    context.tmp_dir_obj = tempfile.TemporaryDirectory()
-    context.tmp_dir = Path(context.tmp_dir_obj.name)
-
-    context.repo_path = context.tmp_dir / "repo"
-    context.xlsx_path = create_xlsx_file(context.tmp_dir)
-
-    # Create repo and commit
-    context.repo_path.mkdir()
-    context.fixture_repo = create_fixture_repo(repo_path=context.repo_path)
-
-    # Create xlsx file
-    context.xlsx_path = create_xlsx_file(context.tmp_dir)
-
-    # Start the server
-    context.server_proc = launch_server(context.xlsx_path, context.repo_path)
-    context.base_url = "http://localhost:8888"
-
-
-def after_all(context):
-    """Clean up the server process and temp directories."""
-    if hasattr(context, "server_proc"):
-        context.server_proc.terminate()
-        context.server_proc.wait()
-
-    if hasattr(context, "tmp_dir_obj"):
-        context.tmp_dir_obj.cleanup()
