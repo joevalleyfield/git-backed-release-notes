@@ -1,3 +1,4 @@
+@with_xlsx
 Feature: Commit Detail Page
 
   Scenario Outline: Commit detail shows correct follows and precedes

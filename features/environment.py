@@ -91,6 +91,39 @@ class ServerProcess:
         )
 
 
+class ServerFarm:
+    """Manages one or more lazily-started ServerProcess instances by mode."""
+
+    def __init__(self, repo_path: Path, xlsx_path: Path, starting_port: int = 8888):
+        self.repo_path = repo_path
+        self.xlsx_path = xlsx_path
+        self.port_counter = starting_port
+        self.servers: dict[str, ServerProcess] = {}
+
+    def get(self, mode: str) -> ServerProcess:
+        """Get or launch a server for the given mode."""
+        if mode not in self.servers:
+            port = self._next_port()
+            use_xlsx = (mode == "xlsx")
+            server = ServerProcess.launch(
+                self.xlsx_path if use_xlsx else None,
+                self.repo_path,
+                port=port,
+            )
+            self.servers[mode] = server
+        return self.servers[mode]
+
+    def shutdown_all(self):
+        """Shut down all running servers."""
+        for server in self.servers.values():
+            server.shutdown()
+
+    def _next_port(self) -> int:
+        port = self.port_counter
+        self.port_counter += 1
+        return port
+
+
 # --- FIXTURES ---
 
 
@@ -135,13 +168,12 @@ def xlsx_file(context, **_kwargs):
 
 
 @fixture
-def app_server(context, **_kwargs):
-    """Launch the app server with captured logs and tear it down after use."""
-
-    server = ServerProcess.launch(context.xlsx_path, context.repo_path)
-    context.server = server
-    yield server
-    server.shutdown()
+def server_farm(context, **_kwargs):
+    """Create a ServerFarm that manages per-mode app servers."""
+    farm = ServerFarm(context.repo_path, context.xlsx_path)
+    context.server_farm = farm
+    yield farm
+    farm.shutdown_all()
 
 
 @fixture
@@ -151,7 +183,7 @@ def composite_fixture(context, **_kwargs):
     use_fixture(temp_directory, context)
     use_fixture(git_repo, context)
     use_fixture(xlsx_file, context)
-    use_fixture(app_server, context)
+    use_fixture(server_farm, context)
 
 
 # --- BEHAVE HOOKS ---
@@ -162,6 +194,10 @@ def before_all(context):
 
     use_fixture(composite_fixture, context)
 
+
+def before_scenario(context, scenario):
+    mode = "xlsx" if "with_xlsx" in scenario.effective_tags else "no_xlsx"
+    context.server = context.server_farm.get(mode)
 
 
 def after_scenario(context, scenario):
