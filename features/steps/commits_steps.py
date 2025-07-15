@@ -19,7 +19,7 @@ def step_known_commit_sha(context, commit_label):
 
 @when("I GET the detail page for that commit")
 def step_get_commit_detail(context):
-    url = f"{context.base_url}/commit/{context.commit_sha}"
+    url = f"{context.server.base_url}/commit/{context.commit_sha}"
     context.response = requests.get(url, timeout=5)
 
 

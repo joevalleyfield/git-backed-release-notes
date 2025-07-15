@@ -4,16 +4,91 @@ This module sets up a temporary Git repository and .xlsx input file,
 launches the Tornado app server before all tests, and tears everything down after.
 """
 
+from dataclasses import dataclass
+from io import StringIO
 from pathlib import Path
 import socket
 import subprocess
 import tempfile
+import threading
 import time
 from types import SimpleNamespace
 
 from behave import fixture, use_fixture
 
 import pandas as pd
+
+
+# --- DATA STRUCTURES ---
+
+
+@dataclass
+class ServerProcess:
+    """Manage a running instance of the Tornado app server for testing.
+
+    Captures subprocess, buffered stdout/stderr, and the base URL of the server.
+    Provides a shutdown method and a classmethod launcher. The buffered logs
+    can be retrieved after shutdown for debugging test failures.
+    """
+
+    proc: subprocess.Popen
+    stdout: StringIO
+    stderr: StringIO
+    base_url: str
+
+    def shutdown(self):
+        """Terminate the server process and wait for it to exit."""
+        self.proc.terminate()
+        self.proc.wait()
+
+    def get_stdout(self) -> str:
+        """Return all buffered stdout from the server process."""
+        return self.stdout.getvalue()
+
+    def get_stderr(self) -> str:
+        """Return all buffered stderr from the server process."""
+        return self.stderr.getvalue()
+
+    @classmethod
+    def launch(cls, xlsx_path: Path, repo_path: Path, port: int = 8888):
+        """Start the app server subprocess and wait for it to become responsive.
+
+        Args:
+            xlsx_path: Path to the input spreadsheet file.
+            repo_path: Path to the Git repository.
+            port: Port to launch the app server on.
+
+        Returns:
+            ServerProcess instance containing handles to the process and its logs.
+        """
+        proc = subprocess.Popen(
+            ["python", "app.py", str(xlsx_path), "--repo", str(repo_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,  # line-buffered
+        )
+        stdout = StringIO()
+        stderr = StringIO()
+
+        def reader(stream, buffer):
+            for line in stream:
+                buffer.write(line)
+
+        threading.Thread(target=reader, args=(proc.stdout, stdout), daemon=True).start()
+        threading.Thread(target=reader, args=(proc.stderr, stderr), daemon=True).start()
+
+        for _ in range(50):
+            if is_port_open("localhost", port):
+                break
+            time.sleep(0.1)
+        else:
+            proc.terminate()
+            raise RuntimeError("Server did not start in time")
+
+        return cls(
+            proc=proc, stdout=stdout, stderr=stderr, base_url=f"http://localhost:{port}"
+        )
 
 
 # --- FIXTURES ---
@@ -61,14 +136,12 @@ def xlsx_file(context, **_kwargs):
 
 @fixture
 def app_server(context, **_kwargs):
-    """Launch the app server and tear it down after use."""
+    """Launch the app server with captured logs and tear it down after use."""
 
-    proc = launch_server(context.xlsx_path, context.repo_path)
-    context.server_proc = proc
-    context.base_url = "http://localhost:8888"
-    yield proc
-    proc.terminate()
-    proc.wait()
+    server = ServerProcess.launch(context.xlsx_path, context.repo_path)
+    context.server = server
+    yield server
+    server.shutdown()
 
 
 @fixture
@@ -88,6 +161,18 @@ def before_all(context):
     """Apply the composite fixture at the start of the test suite."""
 
     use_fixture(composite_fixture, context)
+
+
+
+def after_scenario(context, scenario):
+    """Attach server logs to the scenario and print them if the scenario failed."""
+    if hasattr(context, "server"):
+        scenario.stdout = context.server.get_stdout()
+        scenario.stderr = context.server.get_stderr()
+
+        if scenario.status == "failed":
+            print("\n--- Server STDOUT ---\n", scenario.stdout)
+            print("\n--- Server STDERR ---\n", scenario.stderr)
 
 
 # --- UTILITY FUNCTIONS ---
@@ -157,24 +242,3 @@ def is_port_open(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.settimeout(0.5)
         return sock.connect_ex((host, port)) == 0
-
-
-def launch_server(
-    xlsx_path: Path, repo_path: Path, port: int = 8888
-) -> subprocess.Popen:
-    """Start the app server subprocess and wait until it is accepting connections."""
-
-    proc = subprocess.Popen(
-        ["python", "app.py", str(xlsx_path), "--repo", str(repo_path)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    for _ in range(50):
-        if is_port_open("localhost", port):
-            break
-        time.sleep(0.1)
-    else:
-        proc.terminate()
-        proc.wait()
-        raise RuntimeError("Server did not start in time")
-    return proc
