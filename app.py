@@ -28,10 +28,12 @@ class MainHandler(RequestHandler):
     """Serves the main page showing a table of commits loaded from the spreadsheet."""
 
     df: pd.DataFrame
+    repo_path: str
 
-    def initialize(self, df):
+    def initialize(self, df, repo_path):
         """Inject the preloaded DataFrame of commit metadata into the handler."""
         self.df = df
+        self.repo_path = repo_path
 
     def data_received(self, chunk):
         pass  # Required by base class, not used
@@ -43,7 +45,39 @@ class MainHandler(RequestHandler):
         Passes the full commit metadata DataFrame (as a list of dicts) to the template
         for rendering as an interactive HTML table.
         """
-        self.render("index.html", rows=self.df.to_dict(orient="records"))
+        if self.df is not None:
+            rows = self.df.to_dict(orient="records")
+        else:
+            rows = extract_commits_from_git(self.repo_path)  # <- you must define this
+
+        self.render("index.html", rows=rows)
+
+
+def extract_commits_from_git(repo_path: str) -> list[dict]:
+    """
+    Extract commit metadata directly from the Git repository.
+
+    Returns a list of dictionaries with keys: id, sha, release, message, and author_date.
+    Used when no spreadsheet is provided.
+    """
+    result = subprocess.run(
+        ["git", "-C", repo_path, "log", "--pretty=format:%H%x09%ad%x09%s", "--date=iso"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    rows = []
+    for idx, line in enumerate(result.stdout.strip().splitlines()):
+        sha, author_date, message = line.split("\t", 2)
+        rows.append({
+            "id": idx,
+            "sha": sha,
+            "release": "",  # no spreadsheet = no release label
+            "message": message,
+            "author_date": author_date,
+        })
+    return rows
 
 
 class CommitHandler(RequestHandler):
@@ -311,7 +345,7 @@ def make_app(df, repo_path, tag_pattern):
     """
     return Application(
         [
-            (r"/", MainHandler, dict(df=df)),
+            (r"/", MainHandler, dict(df=df, repo_path=repo_path)),
             (r"/commit/([a-f0-9]+)", CommitHandler, dict(repo_path=repo_path)),
         ],
         template_path="templates",
@@ -326,7 +360,14 @@ def main():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "excel_path", help="Path to the .xlsx file containing commit data"
+        "--excel-path",
+        type=str,
+        default=None,
+        help="Optional path to the remediation Excel spreadsheet",
+    )
+    parser.add_argument(
+        "--port", type=int, default=8000,
+        help="Port to run the server on (default: 8000)"
     )
     parser.add_argument(
         "--repo",
@@ -346,10 +387,13 @@ def main():
         logger.addHandler(handler)
         logger.setLevel(logging.DEBUG)
 
-    df = pd.read_excel(args.excel_path).fillna("")
+    if args.excel_path:
+        df = pd.read_excel(args.excel_path).fillna("")
+    else:
+        df = None
 
     app = make_app(df, args.repo, args.tag_pattern)
-    app.listen(8888)
+    app.listen(args.port)
     print("Server running at http://localhost:8888", flush=True)
 
     IOLoop.current().start()

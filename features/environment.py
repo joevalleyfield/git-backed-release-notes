@@ -34,6 +34,7 @@ class ServerProcess:
     stdout: StringIO
     stderr: StringIO
     base_url: str
+    mode: str = "Unknown"
 
     def shutdown(self):
         """Terminate the server process and wait for it to exit."""
@@ -60,8 +61,16 @@ class ServerProcess:
         Returns:
             ServerProcess instance containing handles to the process and its logs.
         """
+
+        argv = ["python", "app.py"]
+
+        if xlsx_path is not None:
+            argv += ["--excel-path", str(xlsx_path)]
+
+        argv += ["--repo", str(repo_path), "--port", str(port)]
+
         proc = subprocess.Popen(
-            ["python", "app.py", str(xlsx_path), "--repo", str(repo_path)],
+            argv,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -111,6 +120,7 @@ class ServerFarm:
                 self.repo_path,
                 port=port,
             )
+            server.mode = mode
             self.servers[mode] = server
         return self.servers[mode]
 
