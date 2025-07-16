@@ -4,3 +4,4 @@
 - test-precedes-annotated-vs-lightweight-tags
 - auto-highlight-linked-issue-on-commit-page
 - add sidebar nav to index page
+- revisit-skipped-tag-or-issue-behavior-in-no-spreadsheet-mode
