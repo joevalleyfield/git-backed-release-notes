@@ -7,7 +7,7 @@ This field currently exists in the data but is not rendered in the commit index 
 
 - Show the `issue` column in the index table
 - If the value is non-empty, display the slug
-- Optionally, link the slug to `issues/open/<slug>.md` or `issues/closed/<slug>.md` if desired
+- ~~Optionally, link the slug to `issues/open/<slug>.md` or `issues/closed/<slug>.md` if desired~~
 
 ## Motivation
 

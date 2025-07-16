@@ -26,3 +26,8 @@ def step_get_root(context):
 def step_response_contains(context, text):
     assert context.response.status_code == 200
     assert text in context.response.text
+
+@then('the response should contain the issue slug "{slug}"')
+def step_response_contains_issue_slug(context, slug):
+    assert context.response.status_code == 200
+    assert slug in context.response.text, f"Issue slug '{slug}' not found in response"

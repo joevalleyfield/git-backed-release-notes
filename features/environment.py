@@ -275,7 +275,7 @@ def create_xlsx_file(data_dir: Path) -> Path:
                 "id": "c1",
                 "sha": "dummysha",
                 "labels": "",
-                "issue": "",
+                "issue": "display-issue-slugs-in-index",
                 "release": "",
                 "author_date": "",
                 "message": "Initial commit",
