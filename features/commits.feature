@@ -12,3 +12,8 @@ Feature: Commit Detail Page
       | initial      | (none)      | rel-0.2      |
       | middle       | rel-0.1     | rel-0.2      |
       | latest       | (none)      | (none)       |
+
+  Scenario: Commit detail back link targets index anchor
+    Given a known commit "middle"
+    When I GET the detail page for that commit
+    Then the page should have a back link to the index anchor for that commit

@@ -2,7 +2,8 @@
 
 import requests
 from behave import given, when, then  # pylint: disable=no-name-in-module
-from hamcrest import assert_that, contains_string, equal_to, not_
+from hamcrest import assert_that, contains_string, equal_to, is_not, none, not_
+from bs4 import BeautifulSoup
 
 # pylint: disable=missing-function-docstring
 
@@ -44,3 +45,12 @@ def step_response_shows_precedes(context, precedes_tag):
         assert_that(context.response.text, contains_string("Precedes:"))
         assert_that(context.response.text, contains_string(precedes_tag))
         assert_that(context.response.text, contains_string(expected_target_sha))
+
+
+@then("the page should have a back link to the index anchor for that commit")
+def step_check_back_link_anchor(context):
+    soup = BeautifulSoup(context.response.text, "html.parser")
+    back_link = soup.find("a", string="Back")
+    assert_that(back_link, is_not(none()), "Back link not found")
+    expected_href = f"/#sha-{context.commit_sha[:7]}"
+    assert_that(back_link["href"], equal_to(expected_href))

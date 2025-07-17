@@ -6,9 +6,9 @@
       <th>id</th><th>sha</th><th>release</th><th>issue</th></th><th>message</th><th>date</th>
     </tr>
     {% for row in rows %}
-    <tr>
+    <tr id="sha-{{ row['sha'][:7] }}">
       <td>{{ row["id"] }}</td>
-      <td><a href="/commit/{{ row["sha"] }}">{{ row["sha"][:7] }}</a></td>
+      <td><a href="/commit/{{ row['sha'] }}">{{ row["sha"][:7] }}</a></td>
       <td>{{ row["release"] }}</td>
       <td>
         {% if "issue" in row and row["issue"] %}

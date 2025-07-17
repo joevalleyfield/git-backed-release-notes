@@ -16,3 +16,9 @@ Feature: View commit index
     Given the server is running
     When I GET the root page
     Then the response should contain the issue slug "display-issue-slugs-in-index"
+
+  @with_xlsx
+  Scenario: Index rows have anchor IDs for back link targeting
+    Given the server is running
+    When I GET the root page
+    Then the response should contain an anchor id for commit "middle"
