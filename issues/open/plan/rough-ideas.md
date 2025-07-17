@@ -6,3 +6,6 @@
 - add sidebar nav to index page
 - revisit-skipped-tag-or-issue-behavior-in-no-spreadsheet-mode
 - extract issue slugs from commit messages using `Resolves #<slug>` to auto-link commits to issues.
+- Rename @with_xlsx → @requires_spreadsheet for clearer intent and future-proofing
+- Add `__all__` declarations to public-facing modules (e.g. handlers, utils, fixture support)
+  to clarify intended exports and avoid unintentional namespace leaks.
