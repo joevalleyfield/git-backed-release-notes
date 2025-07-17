@@ -37,6 +37,32 @@ def step_excel_contains_updated_issue(context, slug):
     assert_that(issue_value, equal_to(slug))
 
 
+@when('I submit a new release value "{value}" for that commit')
+def step_submit_release_value(context, value):
+    sha = context.commit_sha
+    context.response = requests.post(
+        f"{context.server.base_url}/commit/{sha}/update",
+        data={"release": value},
+        timeout=60,
+    )
+
+
+@then('the commit page should show the updated release value "{value}"')
+def step_commit_page_shows_release(context, value):
+    assert_that(context.response.status_code, equal_to(200))
+    assert_that(context.response.text, contains_string(value))
+
+
+@then('the spreadsheet should contain the release value "{value}" for that commit')
+def step_excel_contains_release(context, value):
+    df = pd.read_excel(context.xlsx_path).fillna("")
+    sha = context.commit_sha
+    matches = df[df["sha"] == sha]
+    assert_that(matches.empty, equal_to(False), f"No row found for sha {sha}")
+    release = matches.iloc[0]["release"]
+    assert_that(release, equal_to(value))
+
+
 @then("the response status should be {code:d}")
 def step_response_status_code(context, code):
     assert_that(context.response.status_code, equal_to(code))

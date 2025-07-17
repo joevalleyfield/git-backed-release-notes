@@ -378,7 +378,6 @@ class UpdateCommitHandler(RequestHandler):
         - 302 redirect back to the commit detail page on success
         """
 
-        new_issue = self.get_argument("issue", "").strip()
         df = self.application.settings["df"]
         if df is None:
             raise HTTPError(500, "No spreadsheet loaded")
@@ -386,7 +385,15 @@ class UpdateCommitHandler(RequestHandler):
         row_idx = get_row_index_by_sha(df, sha)
         if row_idx is None:
             raise HTTPError(404, f"No spreadsheet row found for commit {sha}")
-        df.at[row_idx, "issue"] = new_issue
+
+        if "issue" in self.request.body_arguments:
+            new_issue = self.get_argument("issue", "").strip()
+            df.at[row_idx, "issue"] = new_issue
+
+        if "release" in self.request.body_arguments:
+            new_release = self.get_argument("release", "").strip()
+            df.at[row_idx, "release"] = new_release
+
         xlsx_path = Path(self.application.settings.get("excel_path"))
         if xlsx_path:
             atomic_save_excel(df, xlsx_path)
