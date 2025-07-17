@@ -11,8 +11,9 @@ import re
 import subprocess
 from types import SimpleNamespace
 
-from tornado.web import RequestHandler
-
+from markupsafe import Markup
+from tornado.escape import json_encode
+from tornado.web import  RequestHandler
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())  # safe default
@@ -26,6 +27,11 @@ class CommitHandler(RequestHandler):
     def initialize(self, repo_path):
         """Store the repo path for subprocess calls to Git."""
         self.repo_path = repo_path
+
+    def get_template_namespace(self):
+        namespace = super().get_template_namespace()
+        namespace["tojson"] = lambda obj: Markup(json_encode(obj))  # mark as safe
+        return namespace
 
     def data_received(self, chunk):
         pass  # Required by base class, not used
@@ -262,10 +268,18 @@ class CommitHandler(RequestHandler):
             if not matches.empty:
                 commit_row = matches.iloc[0].to_dict()
 
+        split_index = output.find("diff --git")
+        if split_index == -1:
+            return output, ""  # no diff found
+
+        header = output[:split_index].strip()
+        diff = output[split_index:].strip()
+
         self.render(
             "commit.html",
             sha=sha,
-            output=output,
+            output_header=header,
+            output_diff=diff,
             follows=follows,
             precedes=precedes,
             commit=commit_row,

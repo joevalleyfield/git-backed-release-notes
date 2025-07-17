@@ -1,24 +1,47 @@
 <html>
-<head><title>Commits</title></head>
-<body>
-  <table border="1">
-    <tr>
-      <th>id</th><th>sha</th><th>release</th><th>issue</th></th><th>message</th><th>date</th>
-    </tr>
-    {% for row in rows %}
-    <tr id="sha-{{ row['sha'][:7] }}">
-      <td>{{ row["id"] }}</td>
-      <td><a href="/commit/{{ row['sha'] }}">{{ row["sha"][:7] }}</a></td>
-      <td>{{ row["release"] }}</td>
-      <td>
-        {% if "issue" in row and row["issue"] %}
-          {{ row["issue"] }}
+<head>
+  <title>Commits</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+  <style>
+    /* Highlight the targeted row when jumping via anchor */
+    tr:target {
+      outline: 3px solid #0d6efd;
+      outline-offset: -2px;
+    }
+  </style>
+</head>
+<body class="container py-4">
+  <h1 class="mb-4">Commit Index</h1>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>id</th>
+          <th>sha</th>
+          <th>release</th>
+          <th>issue</th>
+          <th>message</th>
+          <th>date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr id="sha-{{ row['sha'][:7] }}">
+          <td>{{ row["id"] }}</td>
+          <td><a href="/commit/{{ row['sha'] }}">{{ row["sha"][:7] }}</a></td>
+          <td>{{ row["release"] }}</td>
+          <td>
+            {% if "issue" in row and row["issue"] %}
+              {{ row["issue"] }}
+            {% end %}
+          </td>
+          <td>{{ row["message"] }}</td>
+          <td>{{ row["author_date"] }}</td>
+        </tr>
         {% end %}
-      </td>
-      <td>{{ row["message"] }}</td>
-      <td>{{ row["author_date"] }}</td>
-    </tr>
-    {% end %}
-  </table>
+      </tbody>
+    </table>
+  </div>
 </body>
 </html>
