@@ -173,7 +173,7 @@ def git_repo(context, **_kwargs):
 def xlsx_file(context, **_kwargs):
     """Create and register a minimal .xlsx file on the context."""
 
-    path = create_xlsx_file(context.tmp_dir)
+    path = create_xlsx_file(context.tmp_dir, context.fixture_repo)
     context.xlsx_path = path
     yield path
 
@@ -264,7 +264,7 @@ def tag_commit(repo_path: Path, sha: str, tag_name: str) -> None:
     subprocess.run(["git", "tag", tag_name, sha], cwd=repo_path, check=True)
 
 
-def create_xlsx_file(data_dir: Path) -> Path:
+def create_xlsx_file(data_dir: Path, fixture_repo: SimpleNamespace) -> Path:
     """Generate a minimal Excel file with dummy commit metadata."""
 
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -273,15 +273,22 @@ def create_xlsx_file(data_dir: Path) -> Path:
         [
             {
                 "id": "c1",
-                "sha": "dummysha",
-                "labels": "",
-                "issue": "display-issue-slugs-in-index",
+                "sha": fixture_repo.shas[0],
+                "issue": "allow-editing",
                 "release": "",
                 "author_date": "",
                 "message": "Initial commit",
                 "previous refs": "",
                 "initial release": "",
-            }
+            },
+            {
+                "id": "c2",
+                "sha": fixture_repo.shas[1],
+                "issue": "display-issue-slugs-in-index",  # used by edit_commit.feature
+                "release": "",
+                "author_date": "",
+                "message": "Second commit",
+            },
         ]
     )
     df.to_excel(xlsx_path, index=False)

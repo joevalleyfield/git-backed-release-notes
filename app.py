@@ -17,7 +17,7 @@ import subprocess
 from types import SimpleNamespace
 
 import pandas as pd
-from tornado.web import Application, RequestHandler
+from tornado.web import Application, HTTPError, RequestHandler
 from tornado.ioloop import IOLoop
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,14 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
     Used when no spreadsheet is provided.
     """
     result = subprocess.run(
-        ["git", "-C", repo_path, "log", "--pretty=format:%H%x09%ad%x09%s", "--date=iso"],
+        [
+            "git",
+            "-C",
+            repo_path,
+            "log",
+            "--pretty=format:%H%x09%ad%x09%s",
+            "--date=iso",
+        ],
         capture_output=True,
         text=True,
         check=True,
@@ -70,13 +77,15 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
     rows = []
     for idx, line in enumerate(result.stdout.strip().splitlines()):
         sha, author_date, message = line.split("\t", 2)
-        rows.append({
-            "id": idx,
-            "sha": sha,
-            "release": "",  # no spreadsheet = no release label
-            "message": message,
-            "author_date": author_date,
-        })
+        rows.append(
+            {
+                "id": idx,
+                "sha": sha,
+                "release": "",  # no spreadsheet = no release label
+                "message": message,
+                "author_date": author_date,
+            }
+        )
     return rows
 
 
@@ -263,11 +272,14 @@ class CommitHandler(RequestHandler):
                         sha,
                     )
 
-                    is_ancestor = subprocess.run(
-                        ["git", "merge-base", "--is-ancestor", descendant_sha, sha],
-                        cwd=self.repo_path,
-                        check=False,
-                    ).returncode == 0
+                    is_ancestor = (
+                        subprocess.run(
+                            ["git", "merge-base", "--is-ancestor", descendant_sha, sha],
+                            cwd=self.repo_path,
+                            check=False,
+                        ).returncode
+                        == 0
+                    )
 
                     if is_ancestor:
                         logger.debug(
@@ -313,9 +325,21 @@ class CommitHandler(RequestHandler):
             output = f"Error running git show: {e}"
 
         follows, precedes = self.find_closest_tags(sha)
+        df = self.application.settings["df"]
+        commit_row = None
+        if df is not None:
+            df = self.application.settings["df"]
+            matches = df[df["sha"] == sha]
+            if not matches.empty:
+                commit_row = matches.iloc[0].to_dict()
 
         self.render(
-            "commit.html", sha=sha, output=output, follows=follows, precedes=precedes
+            "commit.html",
+            sha=sha,
+            output=output,
+            follows=follows,
+            precedes=precedes,
+            commit=commit_row,
         )
 
     def tag_matches(self, tag):
@@ -334,6 +358,49 @@ class CommitHandler(RequestHandler):
         return fnmatch.fnmatch(tag, self.application.settings["tag_pattern"])
 
 
+class UpdateCommitHandler(RequestHandler):
+    """Handles updates to commit metadata submitted via POST."""
+
+    def post(self, sha):
+        """
+        Update the 'issue' field for a commit in the spreadsheet.
+
+        Expects a form field named 'issue' and a valid commit SHA in the URL.
+        Looks up the matching commit in the loaded spreadsheet and updates the
+        'issue' field for that row in-memory.
+
+        Responds with:
+        - 500 if no spreadsheet is loaded
+        - 404 if the SHA is not found in the spreadsheet
+        - 302 redirect back to the commit detail page on success
+        """
+
+        new_issue = self.get_argument("issue", "").strip()
+        df = self.application.settings["df"]
+        if df is None:
+            raise HTTPError(500, "No spreadsheet loaded")
+
+        row_idx = get_row_index_by_sha(df, sha)
+        if row_idx is None:
+            raise HTTPError(404, f"No spreadsheet row found for commit {sha}")
+        df.at[row_idx, "issue"] = new_issue
+
+        self.redirect(f"/commit/{sha}")
+
+    def data_received(self, chunk):
+        pass  # Required by base class, not used
+
+
+def get_row_index_by_sha(df: pd.DataFrame, sha: str) -> int | None:
+    """
+    Return the index of the commit with the given SHA, or None if not found.
+    """
+    matches = df[df["sha"] == sha]
+    if not matches.empty:
+        return matches.index[0]
+    return None
+
+
 def make_app(df, repo_path, tag_pattern):
     """
     Create and return the Tornado application.
@@ -347,10 +414,12 @@ def make_app(df, repo_path, tag_pattern):
         [
             (r"/", MainHandler, dict(df=df, repo_path=repo_path)),
             (r"/commit/([a-f0-9]+)", CommitHandler, dict(repo_path=repo_path)),
+            (r"/commit/([a-f0-9]+)/update", UpdateCommitHandler),
         ],
         template_path="templates",
         debug=True,
         tag_pattern=tag_pattern,
+        df=df,
     )
 
 
@@ -366,8 +435,10 @@ def main():
         help="Optional path to the remediation Excel spreadsheet",
     )
     parser.add_argument(
-        "--port", type=int, default=8000,
-        help="Port to run the server on (default: 8000)"
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to run the server on (default: 8000)",
     )
     parser.add_argument(
         "--repo",
