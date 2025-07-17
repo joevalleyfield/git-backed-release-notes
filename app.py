@@ -12,10 +12,8 @@ Usage:
 import argparse
 
 import logging
-import os
-from pathlib import Path
 
-from tempfile import NamedTemporaryFile
+from pathlib import Path
 
 
 import pandas as pd
@@ -24,6 +22,7 @@ from tornado.ioloop import IOLoop
 
 from handlers.commit import CommitHandler
 from handlers.main import MainHandler
+from utils.data import atomic_save_excel, get_row_index_by_sha
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())  # safe default
@@ -66,39 +65,14 @@ class UpdateCommitHandler(RequestHandler):
         if xlsx_path:
             atomic_save_excel(df, xlsx_path)
         else:
-            logger.warning("Edit applied in memory, but no excel_path set—changes not saved.")
+            logger.warning(
+                "Edit applied in memory, but no excel_path set—changes not saved."
+            )
 
         self.redirect(f"/commit/{sha}")
 
     def data_received(self, chunk):
         pass  # Required by base class, not used
-
-
-def get_row_index_by_sha(df: pd.DataFrame, sha: str) -> int | None:
-    """
-    Return the index of the commit with the given SHA, or None if not found.
-    """
-    matches = df[df["sha"] == sha]
-    if not matches.empty:
-        return matches.index[0]
-    return None
-
-
-def atomic_save_excel(df: pd.DataFrame, path: Path):
-    """
-    Atomically save a DataFrame to an Excel file.
-
-    Writes the DataFrame to a temporary file in the same directory as `path`, then
-    replaces the original file using `os.replace()` for atomicity.
-
-    By creating the temp file in the target directory, we ensure it's on the same
-    filesystem, avoiding issues with cross-device replacements. Symlinked paths or
-    nonstandard mounts could still violate this assumption.
-    """
-    with NamedTemporaryFile("wb", dir=path.parent, delete=False) as tmp:
-        tmp_path = Path(tmp.name)
-        df.to_excel(tmp_path, index=False)
-    os.replace(tmp_path, path)  # Atomic if on same filesystem
 
 
 def make_app(df, repo_path, tag_pattern, excel_path):
