@@ -12,8 +12,11 @@ Usage:
 import argparse
 import fnmatch
 import logging
+import os
+from pathlib import Path
 import re
 import subprocess
+from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
 
 import pandas as pd
@@ -366,8 +369,8 @@ class UpdateCommitHandler(RequestHandler):
         Update the 'issue' field for a commit in the spreadsheet.
 
         Expects a form field named 'issue' and a valid commit SHA in the URL.
-        Looks up the matching commit in the loaded spreadsheet and updates the
-        'issue' field for that row in-memory.
+        Locates the corresponding row in the loaded spreadsheet, updates the
+        'issue' field in-memory, and overwrites the spreadsheet on disk.
 
         Responds with:
         - 500 if no spreadsheet is loaded
@@ -384,6 +387,11 @@ class UpdateCommitHandler(RequestHandler):
         if row_idx is None:
             raise HTTPError(404, f"No spreadsheet row found for commit {sha}")
         df.at[row_idx, "issue"] = new_issue
+        xlsx_path = Path(self.application.settings.get("excel_path"))
+        if xlsx_path:
+            atomic_save_excel(df, xlsx_path)
+        else:
+            logger.warning("Edit applied in memory, but no excel_path set—changes not saved.")
 
         self.redirect(f"/commit/{sha}")
 
@@ -401,7 +409,14 @@ def get_row_index_by_sha(df: pd.DataFrame, sha: str) -> int | None:
     return None
 
 
-def make_app(df, repo_path, tag_pattern):
+def atomic_save_excel(df: pd.DataFrame, path: Path):
+    with NamedTemporaryFile("wb", dir=path.parent, delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+        df.to_excel(tmp_path, index=False)
+    os.replace(tmp_path, path)  # Atomic if on same filesystem
+
+
+def make_app(df, repo_path, tag_pattern, excel_path):
     """
     Create and return the Tornado application.
 
@@ -420,6 +435,7 @@ def make_app(df, repo_path, tag_pattern):
         debug=True,
         tag_pattern=tag_pattern,
         df=df,
+        excel_path=excel_path,
     )
 
 
@@ -463,7 +479,7 @@ def main():
     else:
         df = None
 
-    app = make_app(df, args.repo, args.tag_pattern)
+    app = make_app(df, args.repo, args.tag_pattern, excel_path=args.excel_path)
     app.listen(args.port)
     print(f"Server running at http://localhost:{args.port}", flush=True)
 
