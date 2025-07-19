@@ -11,8 +11,6 @@ import re
 import subprocess
 from types import SimpleNamespace
 
-from markupsafe import Markup
-from tornado.escape import json_encode
 from tornado.web import  RequestHandler
 
 logger = logging.getLogger(__name__)
@@ -27,11 +25,6 @@ class CommitHandler(RequestHandler):
     def initialize(self, repo_path):
         """Store the repo path for subprocess calls to Git."""
         self.repo_path = repo_path
-
-    def get_template_namespace(self):
-        namespace = super().get_template_namespace()
-        namespace["tojson"] = lambda obj: Markup(json_encode(obj))  # mark as safe
-        return namespace
 
     def data_received(self, chunk):
         pass  # Required by base class, not used
