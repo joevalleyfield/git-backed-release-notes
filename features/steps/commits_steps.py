@@ -50,7 +50,7 @@ def step_response_shows_precedes(context, precedes_tag):
 @then("the page should have a back link to the index anchor for that commit")
 def step_check_back_link_anchor(context):
     soup = BeautifulSoup(context.response.text, "html.parser")
-    back_link = soup.find("a", string="Back")
+    back_link = soup.find("a", id="back-link")
     assert_that(back_link, is_not(none()), "Back link not found")
     expected_href = f"/#sha-{context.commit_sha[:7]}"
     assert_that(back_link["href"], equal_to(expected_href))

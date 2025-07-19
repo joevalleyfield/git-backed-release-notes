@@ -34,3 +34,11 @@ diffs without JS, visually organized metadata, and consistent layout and
 typography across all views. With Bootstrap and Diff2Html integrated, the next
 step is refining details and ensuring semantic markup and visual clarity
 throughout.
+
+## Comments
+
+2025.07.19.Sa 0859
+
+- Fix test regression caused by text change in back link.
+
+---
