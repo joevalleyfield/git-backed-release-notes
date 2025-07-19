@@ -1,16 +1,29 @@
 <html>
-<head><title>Commit {{ sha }}</title></head>
-<body>
-  <h1>git show {{ sha }}</h1>
+<head>
+  <title>Commit {{ sha }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+
+  <!-- diff2html CDN -->
+  <!-- CSS -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+
+  <!-- Javascripts -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
+</head>
+<body class="container py-4">
+  <h1 class="mb-3">git show {{ sha }}</h1>
+
   {% if follows %}
-    <p><em>{{ follows.raw }}</em></p>
+    <p class="text-muted"><em>{{ follows.raw }}</em></p>
   {% end %}
+
   {% if follows or precedes %}
     <p>
       {% if follows and follows.count > 0 %}
         <strong>Follows:</strong>
         {{ follows.base_tag }}
-        (<a href="/commit/{{ follows.tag_sha }}">{{ follows.tag_sha[:7] }}</a>)
+        (<a href="/commit/{{ follows.tag_sha }}">{{ follows.tag_sha[:7] }}</a>)<br>
       {% end %}
       {% if precedes %}
         <strong>Precedes:</strong>
@@ -19,22 +32,36 @@
       {% end %}
     </p>
   {% end %}
+
   {% if commit %}
-    <form action="/commit/{{ commit['sha'] }}/update" method="post">
-      <label for="issue">Issue:</label>
-      <input type="text" name="issue" value="{{ commit['issue'] }}" />
-
-      <label for="release">Release:</label>
-      <input type="text" name="release" value="{{ commit['release'] }}" />
-
-      <button type="submit">Update</button>
+    <form class="mb-4" action="/commit/{{ commit['sha'] }}/update" method="post">
+      <div class="mb-3">
+        <label for="issue" class="form-label">Issue</label>
+        <input type="text" class="form-control" name="issue" id="issue" value="{{ commit['issue'] }}">
+      </div>
+      <div class="mb-3">
+        <label for="release" class="form-label">Release</label>
+        <input type="text" class="form-control" name="release" id="release" value="{{ commit['release'] }}">
+      </div>
+      <button type="submit" class="btn btn-primary">Update</button>
     </form>
   {% else %}
-    <p><em>No spreadsheet data available for this commit.</em></p>
+    <p class="text-muted"><em>No spreadsheet data available for this commit.</em></p>
   {% end %}
-  <pre>{{ output }}</pre>
 
-  <a href="/#sha-{{ sha[:7] }}">Back</a>
+  <pre class="bg-light p-3 border rounded">{{ output_header }}</pre>
 
+  <div id="diff" class="mt-4 border rounded"></div>
+  <script>
+    const diff = {% raw json_encode(output_diff) %};
+    const ui = new Diff2HtmlUI(document.getElementById("diff"), diff, {
+      drawFileList: true,
+      outputFormat: "line-by-line",
+      matching: "lines",
+    });
+    ui.draw();
+  </script>
+
+  <a class="btn btn-outline-secondary mt-3" href="/#sha-{{ sha[:7] }}">← Back to index</a>
 </body>
 </html>
