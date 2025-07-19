@@ -1,67 +1,85 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+  <meta charset="utf-8" />
   <title>Commit {{ sha }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 
   <!-- diff2html CDN -->
-  <!-- CSS -->
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
-
-  <!-- Javascripts -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
 </head>
-<body class="container py-4">
-  <h1 class="mb-3">git show {{ sha }}</h1>
+<body>
+  <main class="container py-4">
 
-  {% if follows %}
-    <p class="text-muted"><em>{{ follows.raw }}</em></p>
-  {% end %}
+    <header class="mb-3">
+      <h1 class="h4">git show {{ sha }}</h1>
 
-  {% if follows or precedes %}
-    <p>
-      {% if follows and follows.count > 0 %}
-        <strong>Follows:</strong>
-        {{ follows.base_tag }}
-        (<a href="/commit/{{ follows.tag_sha }}">{{ follows.tag_sha[:7] }}</a>)<br>
+      {% if follows %}
+        <p class="text-muted"><em>{{ follows.raw }}</em></p>
       {% end %}
-      {% if precedes %}
-        <strong>Precedes:</strong>
-        {{ precedes.base_tag }}
-        (<a href="/commit/{{ precedes.tag_sha }}">{{ precedes.tag_sha[:7] }}</a>)
+
+      {% if follows or precedes %}
+        <nav class="small mb-2">
+          {% if follows and follows.count > 0 %}
+            <strong>Follows:</strong>
+            {{ follows.base_tag }}
+            (<a href="/commit/{{ follows.tag_sha }}">{{ follows.tag_sha[:7] }}</a>)<br>
+          {% end %}
+          {% if precedes %}
+            <strong>Precedes:</strong>
+            {{ precedes.base_tag }}
+            (<a href="/commit/{{ precedes.tag_sha }}">{{ precedes.tag_sha[:7] }}</a>)
+          {% end %}
+        </nav>
       {% end %}
-    </p>
-  {% end %}
+    </header>
 
-  {% if commit %}
-    <form class="mb-4" action="/commit/{{ commit['sha'] }}/update" method="post">
-      <div class="mb-3">
-        <label for="issue" class="form-label">Issue</label>
-        <input type="text" class="form-control" name="issue" id="issue" value="{{ commit['issue'] }}">
-      </div>
-      <div class="mb-3">
-        <label for="release" class="form-label">Release</label>
-        <input type="text" class="form-control" name="release" id="release" value="{{ commit['release'] }}">
-      </div>
-      <button type="submit" class="btn btn-primary">Update</button>
-    </form>
-  {% else %}
-    <p class="text-muted"><em>No spreadsheet data available for this commit.</em></p>
-  {% end %}
+    {% if commit %}
+      <section class="mb-4" aria-labelledby="commit-form-title">
+        <h2 id="commit-form-title" class="h5 mb-3">Edit Metadata</h2>
+        <form action="/commit/{{ commit['sha'] }}/update" method="post">
+          <div class="mb-3">
+            <label for="issue" class="form-label">Issue</label>
+            <input type="text" class="form-control" name="issue" id="issue" value="{{ commit['issue'] }}">
+          </div>
+          <div class="mb-3">
+            <label for="release" class="form-label">Release</label>
+            <input type="text" class="form-control" name="release" id="release" value="{{ commit['release'] }}">
+          </div>
+          <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+      </section>
+    {% else %}
+      <section class="mb-4">
+        <p class="text-muted"><em>No spreadsheet data available for this commit.</em></p>
+      </section>
+    {% end %}
 
-  <pre class="bg-light p-3 border rounded">{{ output_header }}</pre>
+    <section class="mb-4" aria-labelledby="commit-header-title">
+      <h2 id="commit-header-title" class="visually-hidden">Commit Header</h2>
+      <pre class="bg-light p-3 border rounded">{{ output_header }}</pre>
+    </section>
 
-  <div id="diff" class="mt-4 border rounded"></div>
-  <script>
-    const diff = {% raw json_encode(output_diff) %};
-    const ui = new Diff2HtmlUI(document.getElementById("diff"), diff, {
-      drawFileList: true,
-      outputFormat: "line-by-line",
-      matching: "lines",
-    });
-    ui.draw();
-  </script>
+    <section class="mb-4" aria-labelledby="commit-diff-title">
+      <h2 id="commit-diff-title" class="visually-hidden">Diff</h2>
+      <div id="diff" class="border rounded"></div>
+      <script>
+        const diff = {% raw json_encode(output_diff) %};
+        const ui = new Diff2HtmlUI(document.getElementById("diff"), diff, {
+          drawFileList: true,
+          outputFormat: "line-by-line",
+          matching: "lines",
+        });
+        ui.draw();
+      </script>
+    </section>
 
-  <a id="back-link" class="btn btn-outline-secondary mt-3" href="/#sha-{{ sha[:7] }}">← Back to index</a>
+    <footer class="mt-4">
+      <a id="back-link" class="btn btn-outline-secondary" href="/#sha-{{ sha[:7] }}">← Back to index</a>
+    </footer>
+
+  </main>
 </body>
 </html>

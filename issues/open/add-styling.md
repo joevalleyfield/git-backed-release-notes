@@ -21,11 +21,11 @@ defaults, semantic HTML, and graceful fallback when JavaScript is disabled.
 ## Planned Work
 
 - [x] Remove unused `Markup` wrapping and custom `tojson` namespace helper
-- [ ] Refine commit detail page layout (spacing, hierarchy, metadata)
+- ~~[ ] Refine commit detail page layout (spacing, hierarchy, metadata)~~
 - [ ] Improve scan-ability of index/list pages
-- [ ] Apply consistent styling to headers, metadata, and diffs
-- [ ] Use semantic HTML tags (`<main>`, `<section>`, etc.)
-- [ ] Customize Diff2Html theme (optional)
+- ~~[ ] Apply consistent styling to headers, metadata, and diffs~~
+- [x] Use semantic HTML tags (`<main>`, `<section>`, etc.)
+- ~~[ ] Customize Diff2Html theme (optional)~~
 
 ## Notes
 
@@ -45,5 +45,11 @@ throughout.
 2025.07.19.Sa 1149
 
 - Removed unused `tojson` helper and `Markup` import after confirming Tornado's built-in `json_encode` is sufficient for template usage.
+
+---
+2025.07.19.Sa 1236
+
+- Upgraded `commit.html` and `index.html` to use semantic HTML elements (`<main>`, `<header>`, `<section>`, `<footer>`, etc.)
+- Preserved all Bootstrap styling while improving document structure and accessibility.
 
 ---
