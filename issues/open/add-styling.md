@@ -22,7 +22,7 @@ defaults, semantic HTML, and graceful fallback when JavaScript is disabled.
 
 - [x] Remove unused `Markup` wrapping and custom `tojson` namespace helper
 - ~~[ ] Refine commit detail page layout (spacing, hierarchy, metadata)~~
-- [ ] Improve scan-ability of index/list pages
+- [x] Improve scan-ability of index/list pages
 - ~~[ ] Apply consistent styling to headers, metadata, and diffs~~
 - [x] Use semantic HTML tags (`<main>`, `<section>`, etc.)
 - ~~[ ] Customize Diff2Html theme (optional)~~
@@ -51,5 +51,12 @@ throughout.
 
 - Upgraded `commit.html` and `index.html` to use semantic HTML elements (`<main>`, `<header>`, `<section>`, `<footer>`, etc.)
 - Preserved all Bootstrap styling while improving document structure and accessibility.
+
+---
+2025.07.19.Sa 1604
+
+- Removed unnecessary `id` column from index table
+- Reordered columns to improve scan-ability: `sha`, `message`, `issue`, `release`, `date`
+- Layout now prioritizes human-readable context over backend artifacts
 
 ---
