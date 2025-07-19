@@ -1,6 +1,7 @@
 # Add Styling
 
-Track planned styling improvements across the app, with a focus on clean defaults, semantic HTML, and graceful fallback when JavaScript is disabled.
+Track planned styling improvements across the app, with a focus on clean
+defaults, semantic HTML, and graceful fallback when JavaScript is disabled.
 
 ## Goals
 
@@ -8,11 +9,18 @@ Track planned styling improvements across the app, with a focus on clean default
 - Ensure the site remains fully usable without JavaScript
 - Preserve embedding of structured data for progressive enhancement
 
+## Completed Work
+
+- [x] Add Bootstrap 5 for baseline layout and responsive styling
+- [x] Integrate Diff2Html for improved diff rendering
+- [x] Replace raw `<pre>` diff block with dynamic Diff2Html output
+- [x] Pre-render HTML diffs for no-JS fallback on commit pages (via `output_header`)
+- [x] Improve form and table styling using Bootstrap classes
+- [x] Modernize index and commit detail pages with better layout and spacing
+
 ## Planned Work
 
-- [ ] Add Bootstrap for baseline layout and typography
-- [ ] Integrate Diff2Html for improved diff rendering
-- [ ] Pre-render HTML diffs for no-JS fallback on commit pages
+- [ ] Remove unused `Markup` wrapping and custom `tojson` namespace helper
 - [ ] Refine commit detail page layout (spacing, hierarchy, metadata)
 - [ ] Improve scan-ability of index/list pages
 - [ ] Apply consistent styling to headers, metadata, and diffs
@@ -21,4 +29,8 @@ Track planned styling improvements across the app, with a focus on clean default
 
 ## Notes
 
-This issue will guide initial styling passes. Functional priorities include readable diffs without JS, visually organized metadata, and consistent typography/layout across views.
+This issue guides ongoing styling work. Functional priorities include readable
+diffs without JS, visually organized metadata, and consistent layout and
+typography across all views. With Bootstrap and Diff2Html integrated, the next
+step is refining details and ensuring semantic markup and visual clarity
+throughout.
