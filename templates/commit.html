@@ -64,10 +64,13 @@
 
     <section class="mb-4" aria-labelledby="commit-diff-title">
       <h2 id="commit-diff-title" class="visually-hidden">Diff</h2>
-      <div id="diff" class="border rounded"></div>
+      <div id="diff" class="border rounded">
+        <pre class="bg-light p-3 m-0">{{ output_diff }}</pre>
+      </div>
       <script>
-        const diff = {% raw json_encode(output_diff) %};
-        const ui = new Diff2HtmlUI(document.getElementById("diff"), diff, {
+        const container = document.getElementById("diff");
+        const rawText = container.textContent;
+        const ui = new Diff2HtmlUI(container, rawText, {
           drawFileList: true,
           outputFormat: "line-by-line",
           matching: "lines",

@@ -1,7 +1,7 @@
 # Add Styling
 
-Track planned styling improvements across the app, with a focus on clean
-defaults, semantic HTML, and graceful fallback when JavaScript is disabled.
+Styling improvements across the app focused on clean defaults, semantic HTML,
+and graceful fallback when JavaScript is disabled.
 
 ## Goals
 
@@ -17,14 +17,18 @@ defaults, semantic HTML, and graceful fallback when JavaScript is disabled.
 - [x] Pre-render HTML diffs for no-JS fallback on commit pages (via `output_header`)
 - [x] Improve form and table styling using Bootstrap classes
 - [x] Modernize index and commit detail pages with better layout and spacing
-
-## Planned Work
-
 - [x] Remove unused `Markup` wrapping and custom `tojson` namespace helper
-- ~~[ ] Refine commit detail page layout (spacing, hierarchy, metadata)~~
 - [x] Improve scan-ability of index/list pages
-- ~~[ ] Apply consistent styling to headers, metadata, and diffs~~
 - [x] Use semantic HTML tags (`<main>`, `<section>`, etc.)
+
+## Declined Work
+
+These tasks were considered during planning but deliberately excluded from 
+this round after reviewing actual needs, priorities, and implementation
+outcomes.
+
+- ~~[ ] Refine commit detail page layout (spacing, hierarchy, metadata)~~
+- ~~[ ] Apply consistent styling to headers, metadata, and diffs~~
 - ~~[ ] Customize Diff2Html theme (optional)~~
 
 ## Notes
@@ -58,5 +62,13 @@ throughout.
 - Removed unnecessary `id` column from index table
 - Reordered columns to improve scan-ability: `sha`, `message`, `issue`, `release`, `date`
 - Layout now prioritizes human-readable context over backend artifacts
+
+---
+2025.07.19.Sa 1629
+
+- Embedded the raw diff into the DOM as a <pre> block for non-JS fallback
+- Updated JavaScript to hydrate the diff in place using the container's textContent
+- Now fully supports a usable, styled commit view with or without JavaScript
+- This completes the goals of the styling issue
 
 ---
