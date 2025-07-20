@@ -21,6 +21,7 @@ Implement Markdown-backed editing and commit-to-issue linking when no spreadshee
 ## Proposed Behavior
 
 ### Issue Detail View
+
 - Issue Markdown is editable (fields like `status`, `title`, `precedes`, etc.)
 - Save button writes back to file in-place (or safely via temp file swap)
 - Commits associated with this issue are displayed using one of:
@@ -29,6 +30,7 @@ Implement Markdown-backed editing and commit-to-issue linking when no spreadshee
   - Parsing of commit messages (e.g. `Resolves #slug`)
 
 ### Commit Detail View
+
 - If no spreadsheet is present:
   - Commit's associated issue (if any) is inferred and shown
   - UI allows linking this commit to an issue (e.g. dropdown or slug field)

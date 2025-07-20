@@ -20,25 +20,19 @@ logger.addHandler(logging.NullHandler())  # safe default
 class CommitHandler(RequestHandler):
     """Serves detailed information about a single commit using `git show` and tag context."""
 
-    repo_path: str
-
-    def initialize(self, repo_path):
-        """Store the repo path for subprocess calls to Git."""
-        self.repo_path = repo_path
-
     def data_received(self, chunk):
         pass  # Required by base class, not used
 
-    def find_closest_tags(self, sha):
+    def find_closest_tags(self, repo_path, sha):
         """
         Combine `follows` and `precedes` lookups into a single call.
         Returns a tuple: (follows_info, precedes_info)
         """
-        follows = self.find_follows_tag(sha)
-        precedes = self.find_precedes_tag(sha)
+        follows = self.find_follows_tag(repo_path, sha)
+        precedes = self.find_precedes_tag(repo_path, sha)
         return follows, precedes
 
-    def find_follows_tag(self, sha):
+    def find_follows_tag(self, repo_path, sha):
         """
         Return the nearest matching tag reachable from the given commit using `git describe`.
 
@@ -62,7 +56,7 @@ class CommitHandler(RequestHandler):
                 ],
                 capture_output=True,
                 text=True,
-                cwd=self.repo_path,
+                cwd=repo_path,
                 check=True,
             )
             raw = result.stdout.strip()
@@ -74,7 +68,7 @@ class CommitHandler(RequestHandler):
                     ["git", "rev-list", "-n", "1", base_tag],
                     capture_output=True,
                     text=True,
-                    cwd=self.repo_path,
+                    cwd=repo_path,
                     check=True,
                 ).stdout.strip()
 
@@ -101,7 +95,7 @@ class CommitHandler(RequestHandler):
             logger.debug("git describe failed for commit %s: %s", sha, e)
             return None
 
-    def find_precedes_tag(self, sha):
+    def find_precedes_tag(self, repo_path, sha):
         """
         Walks the topological order of commits forward from the given SHA,
         returning the first descendant that matches the tag pattern.
@@ -124,7 +118,7 @@ class CommitHandler(RequestHandler):
                     ],
                     capture_output=True,
                     text=True,
-                    cwd=self.repo_path,
+                    cwd=repo_path,
                     check=True,
                 )
                 .stdout.strip()
@@ -148,7 +142,7 @@ class CommitHandler(RequestHandler):
                         ["git", "rev-list", "-n", "1", tag_name],
                         capture_output=True,
                         text=True,
-                        cwd=self.repo_path,
+                        cwd=repo_path,
                         check=True,
                     ).stdout.strip()
                     tag_shas[tag_commit_sha] = tag_name
@@ -171,7 +165,7 @@ class CommitHandler(RequestHandler):
                     ["git", "rev-list", "--topo-order", "--reverse", "--all"],
                     capture_output=True,
                     text=True,
-                    cwd=self.repo_path,
+                    cwd=repo_path,
                     check=True,
                 )
                 .stdout.strip()
@@ -203,7 +197,7 @@ class CommitHandler(RequestHandler):
                     is_ancestor = (
                         subprocess.run(
                             ["git", "merge-base", "--is-ancestor", descendant_sha, sha],
-                            cwd=self.repo_path,
+                            cwd=repo_path,
                             check=False,
                         ).returncode
                         == 0
@@ -240,19 +234,20 @@ class CommitHandler(RequestHandler):
         - `git show` output
         - Nearest previous and next tags matching the filter pattern
         """
+        repo_path = self.application.settings["repo_path"]
         try:
             result = subprocess.run(
                 ["git", "show", sha],
                 capture_output=True,
                 text=True,
                 check=True,
-                cwd=self.repo_path,
+                cwd=repo_path,
             )
             output = result.stdout
         except subprocess.CalledProcessError as e:
             output = f"Error running git show: {e}"
 
-        follows, precedes = self.find_closest_tags(sha)
+        follows, precedes = self.find_closest_tags(repo_path, sha)
         df = self.application.settings["df"]
         commit_row = None
         if df is not None:
@@ -263,7 +258,11 @@ class CommitHandler(RequestHandler):
 
         split_index = output.find("diff --git")
         if split_index == -1:
-            return output, ""  # no diff found
+            output_diff = "(No diff found)"
+            header = output.strip()
+        else:
+            header = output[:split_index].strip()
+            output_diff = output[split_index:].strip()
 
         header = output[:split_index].strip()
         diff = output[split_index:].strip()
