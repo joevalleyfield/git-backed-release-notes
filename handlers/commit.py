@@ -280,16 +280,17 @@ class CommitHandler(RequestHandler):
 
         split_index = output.find("diff --git")
         if split_index == -1:
-            return output, ""  # no diff found
-
-        header = output[:split_index].strip()
-        diff = output[split_index:].strip()
+            output_diff = "(No diff found)"
+            header = output.strip()
+        else:
+            header = output[:split_index].strip()
+            output_diff = output[split_index:].strip()
 
         self.render(
             "commit.html",
             sha=sha,
             output_header=header,
-            output_diff=diff,
+            output_diff=output_diff,
             follows=follows,
             precedes=precedes,
             commit=commit_row,
