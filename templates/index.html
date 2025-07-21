@@ -38,7 +38,7 @@
               <td>{{ row["message"] }}</td>
               <td>
                 {% if "issue" in row and row["issue"] %}
-                  {{ row["issue"] }}
+                  <a href="/issue/{{ row['issue'] }}">{{ row['issue'] }}</a>
                 {% end %}
               </td>
               <td>{{ row["release"] }}</td>

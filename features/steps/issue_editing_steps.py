@@ -4,14 +4,16 @@ import requests
 from pathlib import Path
 
 from behave import given, when, then  # pylint: disable=no-name-in-module
+from bs4 import BeautifulSoup
 from hamcrest import assert_that, contains_string, equal_to
 
 import pandas as pd
 
 from features.support.issue_helpers import (
     create_issue_file,
-    link_commit_to_issue,
-    make_commit_with_message)
+    link_commit_to_issue)
+
+from features.support.git_helpers import create_commit
 
 # pylint: disable=missing-function-docstring
 
@@ -27,7 +29,7 @@ def step_impl(context, slug):
 
 @given('the Git repository contains a commit "{msg}"')
 def step_impl(context, msg):
-    context.commit_sha = make_commit_with_message(msg, context.repo_path)
+    context.commit_sha = create_commit(context.repo_path, msg)
 
 @then('the issue file "{slug}.md" should contain "{text}"')
 def step_impl(context, slug, text):
@@ -78,3 +80,11 @@ def step_impl(context):
     match = df[df["sha"] == commit_sha]
     assert not match.empty
     assert match.iloc[0]["issue"] == "foo-bar"
+
+
+@then('I should see a link to "/issue/foo-bar" with text "foo-bar"')
+def step_impl(context):
+    soup = BeautifulSoup(context.response.text, "html.parser")
+    match = soup.find("a", href="/issue/foo-bar", string="foo-bar")
+    assert match is not None, "Expected link to /issue/foo-bar with text 'foo-bar' not found"
+

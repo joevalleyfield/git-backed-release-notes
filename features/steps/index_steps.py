@@ -22,6 +22,7 @@ def step_impl(context):
     assert_that(context.server.mode, matcher=equal_to("no_xlsx"))
 
 
+@when("I visit the commit index")
 @when("I GET the root page")
 def step_get_root(context):
     context.response = requests.get(f"{context.server.base_url}/", timeout=5)

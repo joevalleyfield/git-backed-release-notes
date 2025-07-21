@@ -8,14 +8,15 @@ from bs4 import BeautifulSoup
 # pylint: disable=missing-function-docstring
 
 
+@given('a known commit "{commit_label}" with issue "{issue_slug}"')
+def step_known_commit_with_issue(context, commit_label, issue_slug):
+    context.commit_sha = context.fixture_repo.sha_map[commit_label]
+
+
 @given('a known commit "{commit_label}"')
 def step_known_commit_sha(context, commit_label):
-    sha_map = {
-        "initial": context.fixture_repo.shas[0],
-        "middle": context.fixture_repo.shas[1],
-        "latest": context.fixture_repo.shas[2],
-    }
-    context.commit_sha = sha_map[commit_label]
+    context.commit_sha = context.fixture_repo.sha_map[commit_label]
+
 
 
 @when("I GET the detail page for that commit")

@@ -2,11 +2,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from features.environment import create_commit  # if environment.py exports it
-
-def make_commit_with_message(message: str, repo_path: Path = Path(".")) -> str:
-    """Wrapper to create a commit for the current test repo."""
-    return create_commit(repo_path, message)
 
 def create_issue_file(repo_path: Path, slug: str, status: str = "open", body: str = "") -> None:
     base_dir = repo_path / "issues" / status

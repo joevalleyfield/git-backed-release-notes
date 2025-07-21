@@ -18,6 +18,7 @@ from behave import fixture, use_fixture
 import pandas as pd
 
 from features.support.git_helpers import init_repo, create_commit, tag_commit
+from features.support.issue_helpers import link_commit_to_issue
 
 # --- DATA STRUCTURES ---
 
@@ -163,10 +164,21 @@ def git_repo(context, **_kwargs):
     sha_c = create_commit(repo_path, "Third commit (latest)")
     tag_commit(repo_path, sha_c, "rel-0.2")
 
+    sha_example = create_commit(repo_path, "Example commit for issue view")
+    link_commit_to_issue(repo_path, sha_example, "foo-bar")
+
     context.repo_path = repo_path
     context.fixture_repo = SimpleNamespace(
-        shas=[sha_a, sha_b, sha_c], tag_to_sha={"rel-0.1": sha_a, "rel-0.2": sha_c}
+        shas=[sha_a, sha_b, sha_c, sha_example],
+        tag_to_sha={"rel-0.1": sha_a, "rel-0.2": sha_c},
+        sha_map = {
+            "initial": sha_a,
+            "middle": sha_b,
+            "latest": sha_c,
+            "example": sha_example,
+        }
     )
+
     yield repo_path
 
 
