@@ -17,6 +17,10 @@ def step_server_running(context):
 def step_impl(context):
     assert_that(context.server.mode, matcher=equal_to("no_xlsx"))
 
+@given("the server is running in file-backed mode")
+def step_impl(context):
+    assert_that(context.server.mode, matcher=equal_to("no_xlsx"))
+
 
 @when("I GET the root page")
 def step_get_root(context):

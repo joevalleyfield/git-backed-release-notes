@@ -18,6 +18,7 @@ from tornado.web import Application
 from tornado.ioloop import IOLoop
 
 from handlers.commit import CommitHandler
+from handlers.issue import IssueDetailHandler
 from handlers.main import MainHandler
 from handlers.update import UpdateCommitHandler
 
@@ -48,6 +49,7 @@ def make_app(df, repo_path, tag_pattern, excel_path):
         [
             (r"/", MainHandler),
             (r"/commit/([a-f0-9]+)", CommitHandler),
+            (r"/issue/([^/]+)", IssueDetailHandler),
             (r"/commit/([a-f0-9]+)/update", UpdateCommitHandler),
         ],
         template_path="templates",

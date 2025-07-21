@@ -1,0 +1,19 @@
+<h1>Issue: {{ slug }}</h1>
+<p><strong>Status:</strong> {{ status }}</p>
+
+<form action="/issue/{{ slug }}/update" method="post">
+  <textarea name="markdown" rows="20" cols="80" style="width:100%; font-family:monospace;">
+{{ content }}
+  </textarea>
+  <br>
+  <button type="submit">Save</button>
+</form>
+
+{% if linked_commits %}
+  <h2>Linked Commits</h2>
+  <ul>
+    {% for sha in linked_commits %}
+      <li><a href="/commit/{{ sha }}">{{ sha }}</a></li>
+    {% end %}
+  </ul>
+{% end %}
