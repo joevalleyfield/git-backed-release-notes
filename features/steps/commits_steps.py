@@ -54,3 +54,15 @@ def step_check_back_link_anchor(context):
     assert_that(back_link, is_not(none()), "Back link not found")
     expected_href = f"/#sha-{context.commit_sha[:7]}"
     assert_that(back_link["href"], equal_to(expected_href))
+
+
+@then("the page should contain a metadata form with an issue field")
+def step_impl(context):
+    assert '<label for="issue"' in context.response.text
+    assert 'name="issue"' in context.response.text
+
+
+@then("the page should contain a metadata form with a release field")
+def step_impl(context):
+    assert '<label for="release"' in context.response.text
+    assert 'name="release"' in context.response.text

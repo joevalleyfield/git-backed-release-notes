@@ -21,7 +21,14 @@ Feature: Edit commit metadata
     When I submit a new issue slug "ghost" for that commit
     Then the response status should be 404
 
+  Scenario: Commit detail page shows metadata form without spreadsheet
+    Given a known commit "middle"
+    When I GET the detail page for that commit
+    Then the page should contain a metadata form with an issue field
+    And the page should contain a metadata form with a release field
+
   Scenario: User edits the release field for a commit with no spreadsheet
     Given a known commit "middle"
     When I submit a new release value "rel-0.3" for that commit
     Then the commit page should show the updated release value "rel-0.3"
+

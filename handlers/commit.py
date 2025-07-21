@@ -265,9 +265,9 @@ class CommitHandler(RequestHandler):
             match = None
 
         if match is not None and not match.empty:
-            commit_row = match.iloc[0].to_dict()
+            commit_row = match.iloc[0].fillna("").to_dict()
         else:
-            commit_row = None
+            commit_row = {"sha": sha, "issue": "", "release": ""}
 
         split_index = output.find("diff --git")
         if split_index == -1:
