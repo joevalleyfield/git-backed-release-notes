@@ -253,13 +253,21 @@ class CommitHandler(RequestHandler):
             output = f"Error running git show: {e}"
 
         follows, precedes = self.find_closest_tags(sha)
-        df = self.application.settings["df"]
-        commit_row = None
+
+        df = self.application.settings.get("df")
+        store = self.application.settings.get("commit_metadata_store")
+
         if df is not None:
-            df = self.application.settings["df"]
-            matches = df[df["sha"] == sha]
-            if not matches.empty:
-                commit_row = matches.iloc[0].to_dict()
+            match = df[df["sha"] == sha]
+        elif hasattr(store, "df"):
+            match = store.df[store.df["sha"] == sha]
+        else:
+            match = None
+
+        if match is not None and not match.empty:
+            commit_row = match.iloc[0].to_dict()
+        else:
+            commit_row = None
 
         split_index = output.find("diff --git")
         if split_index == -1:

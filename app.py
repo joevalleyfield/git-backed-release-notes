@@ -21,7 +21,10 @@ from handlers.commit import CommitHandler
 from handlers.main import MainHandler
 from handlers.update import UpdateCommitHandler
 
-from utils.metadata_store import SpreadsheetCommitMetadataStore
+from utils.metadata_store import (
+    SpreadsheetCommitMetadataStore,
+    DataFrameCommitMetadataStore,
+)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())  # safe default
@@ -39,7 +42,7 @@ def make_app(df, repo_path, tag_pattern, excel_path):
     if df is not None:
         store = SpreadsheetCommitMetadataStore(df, excel_path)
     else:
-        store = None
+        store = DataFrameCommitMetadataStore(repo_path / "git-view.metadata.csv")
 
     return Application(
         [

@@ -21,8 +21,7 @@ Feature: Edit commit metadata
     When I submit a new issue slug "ghost" for that commit
     Then the response status should be 404
 
-  Scenario: Editing a commit when no spreadsheet is loaded fails
-    Given the server is running without a spreadsheet
-    And a known commit "initial"
-    When I submit a new issue slug "oops" for that commit
-    Then the response status should be 500
+  Scenario: User edits the release field for a commit with no spreadsheet
+    Given a known commit "middle"
+    When I submit a new release value "rel-0.3" for that commit
+    Then the commit page should show the updated release value "rel-0.3"
