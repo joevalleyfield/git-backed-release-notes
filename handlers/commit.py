@@ -11,10 +11,9 @@ import re
 import subprocess
 from types import SimpleNamespace
 
-from tornado.web import  RequestHandler
+from tornado.web import RequestHandler
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())  # safe default
 
 
 class CommitHandler(RequestHandler):
@@ -245,12 +244,22 @@ class CommitHandler(RequestHandler):
                 ["git", "show", sha],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 check=True,
                 cwd=self.repo_path,
             )
             output = result.stdout
         except subprocess.CalledProcessError as e:
-            output = f"Error running git show: {e}"
+            logger.error("git show failed for %s: %s", sha, e.stderr)
+            output = None
+        except Exception as e:
+            logger.exception("Unexpected error while running git show")
+            output = None
+
+        if not output:
+            self.set_status(500)
+            self.write("No output from git show; see logs for details.")
+            return
 
         follows, precedes = self.find_closest_tags(sha)
 
