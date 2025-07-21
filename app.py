@@ -21,6 +21,8 @@ from handlers.commit import CommitHandler
 from handlers.main import MainHandler
 from handlers.update import UpdateCommitHandler
 
+from utils.metadata_store import SpreadsheetCommitMetadataStore
+
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())  # safe default
 
@@ -34,6 +36,11 @@ def make_app(df, repo_path, tag_pattern, excel_path):
         repo_path (str): Path to the local Git repository.
         tag_pattern (str): Glob pattern to filter relevant tags (e.g. 'rel-*').
     """
+    if df is not None:
+        store = SpreadsheetCommitMetadataStore(df, excel_path)
+    else:
+        store = None
+
     return Application(
         [
             (r"/", MainHandler),
@@ -45,6 +52,7 @@ def make_app(df, repo_path, tag_pattern, excel_path):
         tag_pattern=tag_pattern,
         df=df,
         excel_path=excel_path,
+        commit_metadata_store=store,
         repo_path=repo_path,
     )
 
