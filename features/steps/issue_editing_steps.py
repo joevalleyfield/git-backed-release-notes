@@ -88,3 +88,24 @@ def step_impl(context):
     match = soup.find("a", href="/issue/foo-bar", string="foo-bar")
     assert match is not None, "Expected link to /issue/foo-bar with text 'foo-bar' not found"
 
+
+@when('the user updates the issue content to include "{text}"')
+def step_impl(context, text):
+    slug = context.issue_slug
+    path: Path = context.repo_path / "issues/open" / f"{slug}.md"
+    body = path.read_text(encoding="utf-8") + f"\n{text}\n"
+    context.edited_issue_slug = slug
+    context.edited_issue_content = body
+
+@when('the user saves the issue')
+def step_impl(context):
+    slug = context.edited_issue_slug
+    body = context.edited_issue_content
+    url = f"{context.server.base_url}/issue/{slug}/update"
+
+    print(context.edited_issue_content)
+    context.response = requests.post(
+        url,
+        data={"markdown": body},
+        timeout=5,
+    )

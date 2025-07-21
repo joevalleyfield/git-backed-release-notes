@@ -1,5 +1,8 @@
+Feature: File-backed issue interface
 
-Feature: View issue metadata from Markdown files
+  Covers viewing and editing of issue content from Markdown files, and
+  displaying associated commit metadata when no spreadsheet is configured.en no
+  spreadsheet is configured.
 
   Background:
     Given the server is running in file-backed mode
@@ -14,3 +17,9 @@ Feature: View issue metadata from Markdown files
     Given the commit is linked to issue "foo-bar"
     When the user visits the issue "foo-bar" detail page
     Then the issue "foo-bar" should show the commit "Fix the thing"
+
+  Scenario: User edits issue content in Markdown
+    When the user visits the issue "foo-bar" detail page
+    And the user updates the issue content to include "This affects the widget subsystem."
+    And the user saves the issue
+    Then the issue file "foo-bar.md" should contain "This affects the widget subsystem."

@@ -45,3 +45,17 @@ class IssueDetailHandler(RequestHandler):
 
         raise HTTPError(404, f"Issue {slug} not found in open/ or closed/")
 
+class IssueUpdateHandler(RequestHandler):
+    def post(self, slug: str):
+        issues_dir: Path = self.application.settings["issues_dir"]
+        markdown = self.get_body_argument("markdown")
+
+        path = issues_dir / "open" / f"{slug}.md"
+        if not path.exists():
+            self.set_status(404)
+            self.write("Issue not found.")
+            return
+
+        # Optional: backup or atomic write
+        path.write_text(markdown, encoding="utf-8")
+        self.write("OK")
