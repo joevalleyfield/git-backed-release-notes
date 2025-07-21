@@ -17,10 +17,10 @@ class MainHandler(RequestHandler):
     df: pd.DataFrame
     repo_path: str
 
-    def initialize(self, df, repo_path):
+    def initialize(self):
         """Inject the preloaded DataFrame of commit metadata into the handler."""
-        self.df = df
-        self.repo_path = repo_path
+        self.df = self.application.settings.get("df")
+        self.repo_path = self.application.settings.get("repo_path")
 
     def data_received(self, chunk):
         pass  # Required by base class, not used

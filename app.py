@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import logging
+from pathlib import Path
 
 import pandas as pd
 from tornado.web import Application
@@ -35,8 +36,8 @@ def make_app(df, repo_path, tag_pattern, excel_path):
     """
     return Application(
         [
-            (r"/", MainHandler, dict(df=df, repo_path=repo_path)),
-            (r"/commit/([a-f0-9]+)", CommitHandler, dict(repo_path=repo_path)),
+            (r"/", MainHandler),
+            (r"/commit/([a-f0-9]+)", CommitHandler),
             (r"/commit/([a-f0-9]+)/update", UpdateCommitHandler),
         ],
         template_path="templates",
@@ -44,6 +45,7 @@ def make_app(df, repo_path, tag_pattern, excel_path):
         tag_pattern=tag_pattern,
         df=df,
         excel_path=excel_path,
+        repo_path=repo_path,
     )
 
 
@@ -87,7 +89,7 @@ def main():
     else:
         df = None
 
-    app = make_app(df, args.repo, args.tag_pattern, excel_path=args.excel_path)
+    app = make_app(df, Path(args.repo), args.tag_pattern, excel_path=args.excel_path)
     app.listen(args.port)
     print(f"Server running at http://localhost:{args.port}", flush=True)
 

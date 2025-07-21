@@ -22,9 +22,9 @@ class CommitHandler(RequestHandler):
 
     repo_path: str
 
-    def initialize(self, repo_path):
+    def initialize(self):
         """Store the repo path for subprocess calls to Git."""
-        self.repo_path = repo_path
+        self.repo_path = self.application.settings.get("repo_path")
 
     def data_received(self, chunk):
         pass  # Required by base class, not used
