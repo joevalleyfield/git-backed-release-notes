@@ -8,14 +8,15 @@ from bs4 import BeautifulSoup
 # pylint: disable=missing-function-docstring
 
 
+@given('a known commit "{commit_label}" with issue "{issue_slug}"')
+def step_known_commit_with_issue(context, commit_label, issue_slug):
+    context.commit_sha = context.fixture_repo.sha_map[commit_label]
+
+
 @given('a known commit "{commit_label}"')
 def step_known_commit_sha(context, commit_label):
-    sha_map = {
-        "initial": context.fixture_repo.shas[0],
-        "middle": context.fixture_repo.shas[1],
-        "latest": context.fixture_repo.shas[2],
-    }
-    context.commit_sha = sha_map[commit_label]
+    context.commit_sha = context.fixture_repo.sha_map[commit_label]
+
 
 
 @when("I GET the detail page for that commit")
@@ -54,3 +55,15 @@ def step_check_back_link_anchor(context):
     assert_that(back_link, is_not(none()), "Back link not found")
     expected_href = f"/#sha-{context.commit_sha[:7]}"
     assert_that(back_link["href"], equal_to(expected_href))
+
+
+@then("the page should contain a metadata form with an issue field")
+def step_impl(context):
+    assert '<label for="issue"' in context.response.text
+    assert 'name="issue"' in context.response.text
+
+
+@then("the page should contain a metadata form with a release field")
+def step_impl(context):
+    assert '<label for="release"' in context.response.text
+    assert 'name="release"' in context.response.text

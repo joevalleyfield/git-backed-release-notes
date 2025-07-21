@@ -11,14 +11,21 @@ Usage:
 
 import argparse
 import logging
+from pathlib import Path
 
 import pandas as pd
 from tornado.web import Application
 from tornado.ioloop import IOLoop
 
 from handlers.commit import CommitHandler
+from handlers.issue import IssueDetailHandler, IssueUpdateHandler
 from handlers.main import MainHandler
 from handlers.update import UpdateCommitHandler
+
+from utils.metadata_store import (
+    SpreadsheetCommitMetadataStore,
+    DataFrameCommitMetadataStore,
+)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())  # safe default
@@ -33,10 +40,17 @@ def make_app(df, repo_path, tag_pattern, excel_path):
         repo_path (str): Path to the local Git repository.
         tag_pattern (str): Glob pattern to filter relevant tags (e.g. 'rel-*').
     """
+    if df is not None:
+        store = SpreadsheetCommitMetadataStore(df, excel_path)
+    else:
+        store = DataFrameCommitMetadataStore(repo_path / "git-view.metadata.csv")
+
     return Application(
         [
-            (r"/", MainHandler, dict(df=df, repo_path=repo_path)),
-            (r"/commit/([a-f0-9]+)", CommitHandler, dict(repo_path=repo_path)),
+            (r"/", MainHandler),
+            (r"/commit/([a-f0-9]+)", CommitHandler),
+            (r"/issue/([^/]+)", IssueDetailHandler),
+            (r"/issue/([^/]+)/update", IssueUpdateHandler),
             (r"/commit/([a-f0-9]+)/update", UpdateCommitHandler),
         ],
         template_path="templates",
@@ -44,6 +58,9 @@ def make_app(df, repo_path, tag_pattern, excel_path):
         tag_pattern=tag_pattern,
         df=df,
         excel_path=excel_path,
+        commit_metadata_store=store,
+        issues_dir=repo_path / "issues",
+        repo_path=repo_path,
     )
 
 
@@ -87,7 +104,7 @@ def main():
     else:
         df = None
 
-    app = make_app(df, args.repo, args.tag_pattern, excel_path=args.excel_path)
+    app = make_app(df, Path(args.repo), args.tag_pattern, excel_path=args.excel_path)
     app.listen(args.port)
     print(f"Server running at http://localhost:{args.port}", flush=True)
 

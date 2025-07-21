@@ -17,6 +17,8 @@ from behave import fixture, use_fixture
 
 import pandas as pd
 
+from features.support.git_helpers import init_repo, create_commit, tag_commit
+from features.support.issue_helpers import link_commit_to_issue
 
 # --- DATA STRUCTURES ---
 
@@ -162,10 +164,21 @@ def git_repo(context, **_kwargs):
     sha_c = create_commit(repo_path, "Third commit (latest)")
     tag_commit(repo_path, sha_c, "rel-0.2")
 
+    sha_example = create_commit(repo_path, "Example commit for issue view")
+    link_commit_to_issue(repo_path, sha_example, "foo-bar")
+
     context.repo_path = repo_path
     context.fixture_repo = SimpleNamespace(
-        shas=[sha_a, sha_b, sha_c], tag_to_sha={"rel-0.1": sha_a, "rel-0.2": sha_c}
+        shas=[sha_a, sha_b, sha_c, sha_example],
+        tag_to_sha={"rel-0.1": sha_a, "rel-0.2": sha_c},
+        sha_map = {
+            "initial": sha_a,
+            "middle": sha_b,
+            "latest": sha_c,
+            "example": sha_example,
+        }
     )
+
     yield repo_path
 
 
@@ -228,40 +241,6 @@ def after_scenario(context, scenario):
 
 
 # --- UTILITY FUNCTIONS ---
-
-
-def init_repo(repo_path: Path) -> None:
-    """Initialize a Git repository with user config."""
-
-    subprocess.run(["git", "init"], cwd=repo_path, check=True)
-    subprocess.run(
-        ["git", "config", "user.name", "Test User"], cwd=repo_path, check=True
-    )
-    subprocess.run(
-        ["git", "config", "user.email", "test@example.com"], cwd=repo_path, check=True
-    )
-
-
-def create_commit(repo_path: Path, message: str) -> str:
-    """Create a commit with the given message and return its SHA."""
-
-    with open(repo_path / "file.txt", "a", encoding="utf-8") as f:
-        f.write(f"{message}\n")
-    subprocess.run(["git", "add", "."], cwd=repo_path, check=True)
-    subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True)
-    return subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=repo_path,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
-
-
-def tag_commit(repo_path: Path, sha: str, tag_name: str) -> None:
-    """Create a lightweight tag pointing to the specified commit SHA."""
-
-    subprocess.run(["git", "tag", tag_name, sha], cwd=repo_path, check=True)
 
 
 def create_xlsx_file(data_dir: Path, fixture_repo: SimpleNamespace) -> Path:

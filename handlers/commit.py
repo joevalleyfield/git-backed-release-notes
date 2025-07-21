@@ -11,10 +11,9 @@ import re
 import subprocess
 from types import SimpleNamespace
 
-from tornado.web import  RequestHandler
+from tornado.web import RequestHandler
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())  # safe default
 
 
 class CommitHandler(RequestHandler):
@@ -22,9 +21,9 @@ class CommitHandler(RequestHandler):
 
     repo_path: str
 
-    def initialize(self, repo_path):
+    def initialize(self):
         """Store the repo path for subprocess calls to Git."""
-        self.repo_path = repo_path
+        self.repo_path = self.application.settings.get("repo_path")
 
     def data_received(self, chunk):
         pass  # Required by base class, not used
@@ -245,34 +244,53 @@ class CommitHandler(RequestHandler):
                 ["git", "show", sha],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 check=True,
                 cwd=self.repo_path,
             )
             output = result.stdout
         except subprocess.CalledProcessError as e:
-            output = f"Error running git show: {e}"
+            logger.error("git show failed for %s: %s", sha, e.stderr)
+            output = None
+        except Exception as e:
+            logger.exception("Unexpected error while running git show")
+            output = None
+
+        if not output:
+            self.set_status(500)
+            self.write("No output from git show; see logs for details.")
+            return
 
         follows, precedes = self.find_closest_tags(sha)
-        df = self.application.settings["df"]
-        commit_row = None
+
+        df = self.application.settings.get("df")
+        store = self.application.settings.get("commit_metadata_store")
+
         if df is not None:
-            df = self.application.settings["df"]
-            matches = df[df["sha"] == sha]
-            if not matches.empty:
-                commit_row = matches.iloc[0].to_dict()
+            match = df[df["sha"] == sha]
+        elif hasattr(store, "df"):
+            match = store.df[store.df["sha"] == sha]
+        else:
+            match = None
+
+        if match is not None and not match.empty:
+            commit_row = match.iloc[0].fillna("").to_dict()
+        else:
+            commit_row = {"sha": sha, "issue": "", "release": ""}
 
         split_index = output.find("diff --git")
         if split_index == -1:
-            return output, ""  # no diff found
-
-        header = output[:split_index].strip()
-        diff = output[split_index:].strip()
+            output_diff = "(No diff found)"
+            header = output.strip()
+        else:
+            header = output[:split_index].strip()
+            output_diff = output[split_index:].strip()
 
         self.render(
             "commit.html",
             sha=sha,
             output_header=header,
-            output_diff=diff,
+            output_diff=output_diff,
             follows=follows,
             precedes=precedes,
             commit=commit_row,

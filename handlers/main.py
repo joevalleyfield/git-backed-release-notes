@@ -9,6 +9,7 @@ import pandas as pd
 from tornado.web import RequestHandler
 
 from utils.git import extract_commits_from_git
+from utils.metadata_store import CommitMetadataStore
 
 
 class MainHandler(RequestHandler):
@@ -16,11 +17,13 @@ class MainHandler(RequestHandler):
 
     df: pd.DataFrame
     repo_path: str
+    store: CommitMetadataStore
 
-    def initialize(self, df, repo_path):
+    def initialize(self):
         """Inject the preloaded DataFrame of commit metadata into the handler."""
-        self.df = df
-        self.repo_path = repo_path
+        self.df = self.application.settings.get("df")
+        self.repo_path = self.application.settings.get("repo_path")
+        self.store = self.application.settings.get("commit_metadata_store")
 
     def data_received(self, chunk):
         pass  # Required by base class, not used
@@ -35,6 +38,21 @@ class MainHandler(RequestHandler):
         if self.df is not None:
             rows = self.df.to_dict(orient="records")
         else:
-            rows = extract_commits_from_git(self.repo_path)  # <- you must define this
+            git_rows = extract_commits_from_git(self.repo_path)
+            metadata_df = self.store.df.fillna("")  # from DataFrameCommitMetadataStore
+
+            if not metadata_df.empty:
+                metadata = metadata_df.set_index("sha").to_dict(orient="index")
+            else:
+                metadata = {}
+
+            # Merge
+            rows = []
+            for row in git_rows:
+                sha = row["sha"]
+                meta = metadata.get(sha, {})
+                row["issue"] = meta.get("issue", "")
+                row["release"] = meta.get("release", "")
+                rows.append(row)
 
         self.render("index.html", rows=rows)

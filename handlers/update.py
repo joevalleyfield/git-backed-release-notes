@@ -33,27 +33,23 @@ class UpdateCommitHandler(RequestHandler):
         - 302 redirect back to the commit detail page on success
         """
 
-        df = self.application.settings["df"]
-        if df is None:
-            raise HTTPError(500, "No spreadsheet loaded")
+        store = self.application.settings.get("commit_metadata_store")
+        if store is None:
+            raise HTTPError(500, "No commit metadata store configured")
 
-        row_idx = get_row_index_by_sha(df, sha)
-        if row_idx is None:
-            raise HTTPError(404, f"No spreadsheet row found for commit {sha}")
+        try:
+            if "issue" in self.request.body_arguments:
+                new_issue = self.get_argument("issue", "").strip()
+                store.set_issue(sha, new_issue)
 
-        if "issue" in self.request.body_arguments:
-            new_issue = self.get_argument("issue", "").strip()
-            df.at[row_idx, "issue"] = new_issue
+            if "release" in self.request.body_arguments:
+                new_release = self.get_argument("release", "").strip()
+                store.set_release(sha, new_release)
 
-        if "release" in self.request.body_arguments:
-            new_release = self.get_argument("release", "").strip()
-            df.at[row_idx, "release"] = new_release
+            store.save()
 
-        xlsx_path = Path(self.application.settings.get("excel_path"))
-        if xlsx_path:
-            atomic_save_excel(df, xlsx_path)
-        else:
-            logger.warning("Edit applied in memory, but no excel_path set—changes not saved.")
+        except KeyError as e:
+            raise HTTPError(404, str(e)) from e
 
         self.redirect(f"/commit/{sha}")
 

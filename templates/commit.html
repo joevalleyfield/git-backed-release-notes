@@ -36,26 +36,20 @@
       {% end %}
     </header>
 
-    {% if commit %}
-      <section class="mb-4" aria-labelledby="commit-form-title">
-        <h2 id="commit-form-title" class="h5 mb-3">Edit Metadata</h2>
-        <form action="/commit/{{ commit['sha'] }}/update" method="post">
-          <div class="mb-3">
-            <label for="issue" class="form-label">Issue</label>
-            <input type="text" class="form-control" name="issue" id="issue" value="{{ commit['issue'] }}">
-          </div>
-          <div class="mb-3">
-            <label for="release" class="form-label">Release</label>
-            <input type="text" class="form-control" name="release" id="release" value="{{ commit['release'] }}">
-          </div>
-          <button type="submit" class="btn btn-primary">Update</button>
-        </form>
-      </section>
-    {% else %}
-      <section class="mb-4">
-        <p class="text-muted"><em>No spreadsheet data available for this commit.</em></p>
-      </section>
-    {% end %}
+    <section class="mb-4" aria-labelledby="commit-form-title">
+      <h2 id="commit-form-title" class="h5 mb-3">Edit Metadata</h2>
+      <form action="/commit/{{ commit['sha'] }}/update" method="post">
+        <div class="mb-3">
+          <label for="issue" class="form-label">Issue</label>
+          <input type="text" class="form-control" name="issue" id="issue" value="{{ commit['issue'] }}">
+        </div>
+        <div class="mb-3">
+          <label for="release" class="form-label">Release</label>
+          <input type="text" class="form-control" name="release" id="release" value="{{ commit['release'] }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </form>
+    </section>
 
     <section class="mb-4" aria-labelledby="commit-header-title">
       <h2 id="commit-header-title" class="visually-hidden">Commit Header</h2>
