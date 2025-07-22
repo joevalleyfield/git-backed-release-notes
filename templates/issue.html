@@ -5,6 +5,14 @@
   <title>Issue: {{ slug }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+
+  <!-- EasyMDE -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
+
+  <!-- marked + DOMPurify for preview -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.3/dist/purify.min.js"></script>
 </head>
@@ -18,12 +26,14 @@
     <form action="/issue/{{ slug }}/update" method="post" class="mb-4">
       <ul class="nav nav-tabs mb-2" id="editorTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit" type="button" role="tab">Edit</button>
+          <button class="nav-link active" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit" type="button" role="tab">Raw</button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab">Preview</button>
         </li>
-        <!-- Future: <li class="nav-item"><button class="nav-link" ...>WYSIWYG</button></li> -->
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="wysiwyg-tab" data-bs-toggle="tab" data-bs-target="#wysiwyg" type="button" role="tab">WYSIWYG</button>
+        </li>
       </ul>
 
       <div class="tab-content border rounded p-3" id="editorTabsContent">
@@ -32,6 +42,9 @@
         </div>
         <div class="tab-pane fade" id="preview" role="tabpanel">
           <div id="preview-content" class="markdown-body"></div>
+        </div>
+        <div class="tab-pane fade" id="wysiwyg" role="tabpanel">
+          <textarea id="wysiwyg-textarea">{{ content }}</textarea>
         </div>
       </div>
 
@@ -53,12 +66,31 @@
   </main>
 
   <script>
-    const textarea = document.getElementById('markdown');
+    const raw = document.getElementById('markdown');
+    const wysiwygTextarea = document.getElementById('wysiwyg-textarea');
     const preview = document.getElementById('preview-content');
 
+    // Setup EasyMDE for WYSIWIG
+    const easyMDE = new EasyMDE({
+      element: wysiwygTextarea,
+      autoDownloadFontAwesome: false,
+      status: false,
+      toolbar: ['bold', 'italic', 'heading', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'preview', 'guide']
+    });
+
+    // Sync from WYSIWYG to raw greedily 
+    easyMDE.codemirror.on('change', () => {
+      raw.value = easyMDE.value();
+    });
+
+    // Sync preview when switching tabs
     document.getElementById('preview-tab').addEventListener('shown.bs.tab', () => {
-      const raw = textarea.value;
-      preview.innerHTML = DOMPurify.sanitize(marked.parse(raw));
+      preview.innerHTML = DOMPurify.sanitize(marked.parse(raw.value));
+    });
+
+    // Sync from raw when switching to WYSIWYG
+    document.getElementById('wysiwyg-tab').addEventListener('shown.bs.tab', () => {
+      easyMDE.value(raw.value);
     });
   </script>
 </body>
