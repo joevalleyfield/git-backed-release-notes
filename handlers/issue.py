@@ -1,5 +1,6 @@
 import logging 
 from pathlib import Path
+from urllib.parse import quote
 
 import pandas as pd
 from tornado.web import RequestHandler, HTTPError
@@ -7,55 +8,70 @@ from tornado.web import RequestHandler, HTTPError
 logger = logging.getLogger(__name__)
 # logger.addHandler(logging.NullHandler())  # safe default
 
+
+def find_issue_file(slug: str, issues_dir: Path) -> Path | None:
+    for subdir in ("open", "closed"):
+        path = issues_dir / subdir / f"{slug}.md"
+        if path.exists():
+            return path
+    return None
+
+
 class IssueDetailHandler(RequestHandler):
     def get(self, slug):
         """
         Look for the issue in issues/open/ or issues/closed/
         Render issue.html with its content.
         """
-        repo_path = self.application.settings.get("repo_path")
+        repo_path: Path = self.application.settings["repo_path"]
+        issues_dir: Path = self.application.settings["issues_dir"]
+
         issue_paths = [
             repo_path / "issues/open" / f"{slug}.md",
             repo_path / "issues/closed" / f"{slug}.md",
         ]
 
-        for path in issue_paths:
-            if path.exists():
-                with path.open(encoding="utf-8") as f:
-                    content = f.read()
-                status = path.parent.name
+        path = find_issue_file(slug, issues_dir)
+        if path is None:
+            raise HTTPError(404, f"Issue {slug} not found in open/ or closed/")
 
-                commit_metadata_store = self.application.settings.get("commit_metadata_store")
-                linked_commits = []
+        with path.open(encoding="utf-8") as f:
+            content = f.read()
+        status = path.parent.name
 
-                if hasattr(commit_metadata_store, "df"):
-                    try:
-                        commit_metadata_store.df = pd.read_csv(commit_metadata_store.path)
-                    except Exception as e:
-                        logger.warning("Failed to reload commit metadata store: %s", e)
-                    # This assumes a DataFrame-based store — safe for no-xlsx mode
-                    df = commit_metadata_store.df
-                    matches = df[df["issue"] == slug]
-                    linked_commits = matches["sha"].tolist()
+        commit_metadata_store = self.application.settings.get("commit_metadata_store")
+        linked_commits = []
 
-                logger.debug("linked_commits: %s", linked_commits)
+        if hasattr(commit_metadata_store, "df"):
+            try:
+                commit_metadata_store.df = pd.read_csv(commit_metadata_store.path)
+            except Exception as e:
+                logger.warning("Failed to reload commit metadata store: %s", e)
+            df = commit_metadata_store.df
+            matches = df[df["issue"] == slug]
+            linked_commits = matches["sha"].tolist()
 
-                self.render("issue.html", slug=slug, status=status, content=content, linked_commits=linked_commits)
-                return
+        logger.debug("linked_commits: %s", linked_commits)
 
-        raise HTTPError(404, f"Issue {slug} not found in open/ or closed/")
+        self.render(
+            "issue.html",
+            slug=slug,
+            status=status,
+            content=content,
+            linked_commits=linked_commits,
+        )
+
 
 class IssueUpdateHandler(RequestHandler):
     def post(self, slug: str):
         issues_dir: Path = self.application.settings["issues_dir"]
         markdown = self.get_body_argument("markdown")
 
-        path = issues_dir / "open" / f"{slug}.md"
-        if not path.exists():
+        path = find_issue_file(slug, issues_dir)
+        if path is None:
             self.set_status(404)
             self.write("Issue not found.")
             return
 
-        # Optional: backup or atomic write
         path.write_text(markdown, encoding="utf-8")
-        self.write("OK")
+        self.redirect(f"/issue/{quote(slug)}")

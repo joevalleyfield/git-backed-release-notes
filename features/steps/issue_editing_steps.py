@@ -89,13 +89,27 @@ def step_impl(context):
     assert match is not None, "Expected link to /issue/foo-bar with text 'foo-bar' not found"
 
 
+# @when('the user updates the issue content to include "{text}"')
+# def step_impl(context, text):
+#     slug = context.issue_slug
+#     path: Path = context.repo_path / "issues/open" / f"{slug}.md"
+#     body = path.read_text(encoding="utf-8") + f"\n{text}\n"
+#     context.edited_issue_slug = slug
+#     context.edited_issue_content = body
+
 @when('the user updates the issue content to include "{text}"')
 def step_impl(context, text):
     slug = context.issue_slug
-    path: Path = context.repo_path / "issues/open" / f"{slug}.md"
-    body = path.read_text(encoding="utf-8") + f"\n{text}\n"
+
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(context.response.text, "html.parser")
+    textarea = soup.find("textarea", attrs={"name": "markdown"})
+    assert textarea is not None, "Expected a textarea named 'markdown' in the response"
+
+    body = textarea.text + f"\n{text}\n"
     context.edited_issue_slug = slug
     context.edited_issue_content = body
+
 
 @when('the user saves the issue')
 def step_impl(context):
@@ -109,3 +123,13 @@ def step_impl(context):
         data={"markdown": body},
         timeout=5,
     )
+
+@given('the issues directory contains a closed issue "{slug}"')
+def step_impl(context, slug):
+    create_issue_file(context.repo_path, slug, closed=True)
+    context.issue_slug = slug
+
+@then('the closed issue file "{slug}.md" should contain "{text}"')
+def step_impl(context, slug, text):
+    with open(context.repo_path / f"issues/closed/{slug}.md", encoding="utf-8") as f:
+        assert text in f.read()

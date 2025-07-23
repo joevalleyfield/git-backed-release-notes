@@ -23,3 +23,10 @@ Feature: File-backed issue interface
     And the user updates the issue content to include "This affects the widget subsystem."
     And the user saves the issue
     Then the issue file "foo-bar.md" should contain "This affects the widget subsystem."
+
+  Scenario: User edits a closed issue
+    Given the issues directory contains a closed issue "frobnicator-issue"
+    When the user visits the issue "frobnicator-issue" detail page
+    And the user updates the issue content to include "This affects the frobnicator."
+    And the user saves the issue
+    Then the closed issue file "frobnicator-issue.md" should contain "This affects the frobnicator."

@@ -3,7 +3,17 @@ from pathlib import Path
 import pandas as pd
 
 
-def create_issue_file(repo_path: Path, slug: str, status: str = "open", body: str = "") -> None:
+def create_issue_file(
+    repo_path: Path,
+    slug: str,
+    status: str = "open",
+    body: str = "",
+    *,
+    closed: bool | None = None,
+) -> None:
+    if closed is not None:
+        status = "closed" if closed else "open"
+
     base_dir = repo_path / "issues" / status
     base_dir.mkdir(parents=True, exist_ok=True)
     path = base_dir / f"{slug}.md"
@@ -12,6 +22,7 @@ def create_issue_file(repo_path: Path, slug: str, status: str = "open", body: st
         f.write(f"status: {status}\n")
         if body:
             f.write("\n" + body + "\n")
+
 
 def link_commit_to_issue(repo_path: Path, sha: str, issue_slug: str) -> None:
     metadata_path = repo_path / "git-view.metadata.csv"
