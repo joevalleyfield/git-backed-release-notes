@@ -1,6 +1,6 @@
 # Style the Issue Detail Page
 
-## 🎯 Bob Bob Bob
+## 🎯 Goals
 
 - Apply Bootstrap styling to the issue detail page for layout consistency.
 - Add a Markdown preview/editor experience with two modes:
