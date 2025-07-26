@@ -9,9 +9,10 @@ This is a minimal Tornado-based web viewer for navigating and annotating the com
   * Commit SHA (linked to detailed view)
   * Message, release labels, issue slugs, author date, and more
 * Per-commit detail view shows:
-  * `git show` output
+  * `git show` output (plain fallback with dynamic Diff2Html enhancement)
   * Nearest matching tags: `Follows:` (before) and `Precedes:` (after)
   * Edit fields for `issue` and `release`, saved back to the spreadsheet
+* Fully styled interface with Bootstrap 5 and semantic HTML
 * Edits persist immediately using atomic overwrite
 * Graph-aware tag navigation using `git describe` and `rev-list`
 * Optional tag filtering via glob pattern (e.g., `rel-*`)
@@ -32,11 +33,23 @@ You can also omit `--excel-path` to run in read-only mode with Git metadata only
 python app.py --repo path/to/repo
 ```
 
-### 🔧 Editing Metadata
+### Metadata and Issue Content
 
 The per-commit page allows editing the `issue` and `release` fields.
-Edits are applied to the in-memory model and saved back to the spreadsheet on disk.
+Edits are applied to the in-memory model and saved back to disk.
 Conflicts (e.g. missing spreadsheet or unknown commit) result in clear error messages.
+
+This app supports two modes for metadata storage:
+
+1. **With spreadsheet** (`git-view.metadata.xlsx`):
+   - Commit metadata fields like `issue` and `release` are stored in the spreadsheet
+   - Issue files (`issues/{open,closed}/*.md`) would be used if present, but typically aren't
+   - Editing issue content is not supported in this mode
+
+2. **Without spreadsheet**:
+   - Commit metadata is stored in a CSV file generated on disk
+   - Issue files (`issues/{open,closed}/*.md`) are used to display and edit issue content
+   - Each commit’s `issue` field links to a corresponding Markdown file if present
 
 ### 🔍 Debug Logging
 
