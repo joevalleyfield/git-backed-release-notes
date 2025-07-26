@@ -1,5 +1,11 @@
 # Refactor: Modularization of Git Viewer App
 
+**Status:** ✅ Completed
+
+**Merged in:** `main`
+
+**Follow-up:** `tools/bundle.py` bundler not yet implemented; future work in standalone packaging
+
 ## Motivation
 
 The Git Viewer app was originally implemented in a single Python file (`app.py`). This made it easy to deploy and iterate on, but as the project grew, several drawbacks emerged:
@@ -76,3 +82,9 @@ This keeps the modular dev layout while preserving portability.
 - Consider Jinja2 templating
 - Investigate `pex` or `shiv` for bundling as a zipapp
 - Add `__init__.py` files to support future import as a library
+
+## See also
+
+- Commit: `b2d61ca` – move `CommitHandler` to `handlers/commit.py`
+- Commit: `ba2c696` – move `UpdateCommitHandler` to `handlers/update.py`
+- Commit: `58fd4be` – move utility functions to `util/data.py`
