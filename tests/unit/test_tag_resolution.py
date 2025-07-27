@@ -50,6 +50,14 @@ def test_find_follows_tag(test_repo: Path):
     assert result.tag_sha == shas[0]
 
 
+def test_find_follows_tag_returns_none_if_no_match(test_repo: Path):
+    from utils.git import find_follows_tag
+    shas = get_log_shas(test_repo)
+    # No tags at all
+    result = find_follows_tag(shas[-1], str(test_repo), "rel-*")
+    assert result is None
+
+
 def test_find_precedes_tag(test_repo: Path):
     shas = get_log_shas(test_repo)
     create_tag(test_repo, shas[2], "rel-0.2")
@@ -58,6 +66,15 @@ def test_find_precedes_tag(test_repo: Path):
     assert isinstance(result, SimpleNamespace)
     assert result.base_tag == "rel-0.2"
     assert result.tag_sha == shas[2]
+
+
+def test_find_precedes_tag_returns_none_if_no_descendant_match(test_repo: Path):
+    from utils.git import find_precedes_tag
+    shas = get_log_shas(test_repo)
+    # Only tag the first commit
+    create_tag(test_repo, shas[0], "rel-0.1")
+    result = find_precedes_tag(shas[-1], str(test_repo), "rel-*")
+    assert result is None
 
 
 def test_get_matching_tag_commits(test_repo: Path):
