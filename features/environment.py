@@ -70,6 +70,7 @@ class ServerProcess:
             argv += ["--excel-path", str(xlsx_path)]
 
         argv += ["--repo", str(repo_path), "--port", str(port)]
+        argv += ["--no-browser"]
 
         proc = subprocess.Popen(
             argv,
