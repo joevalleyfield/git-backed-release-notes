@@ -113,14 +113,15 @@ def get_tag_commit_sha(tag: str, repo_path: str) -> str:
 
 def find_follows_tag(sha, repo_path, tag_pattern):
     """
-    Return the nearest matching tag reachable from the given commit using `git describe`.
+    Find the nearest matching tag reachable from the given commit using `git describe`.
 
     Returns:
-        SimpleNamespace with fields:
-        - raw: full describe string
-        - base_tag: tag name
-        - count: commits since tag
-        - tag_sha: SHA of the base tag's commit
+        A SimpleNamespace with:
+            - raw (str): the full `git describe` output string
+            - base_tag (str): the matching tag name
+            - count (int): number of commits since the tag
+            - tag_sha (str): commit SHA of the tag
+        Returns None if no matching tag is found.
     """
     logger.debug("Resolving Follows tag for commit: %s", sha)
     try:
@@ -168,15 +169,16 @@ def find_follows_tag(sha, repo_path, tag_pattern):
         logger.debug("git describe failed for commit %s: %s", sha, e)
         return None
 
-def find_precedes_tag(sha, repo_path, tag_pattern):
+def find_precedes_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNamespace | None:
     """
-    Walks the topological order of commits forward from the given SHA,
-    returning the first descendant that matches the tag pattern.
+    Walks the commit graph forward from the given SHA to find the first descendant
+    with a tag matching the given pattern.
 
     Returns:
-        SimpleNamespace with:
-        - base_tag: tag name
-        - tag_sha: SHA of the tag's commit
+        A SimpleNamespace with:
+            - base_tag (str): the matching tag name
+            - tag_sha (str): commit SHA of the tag
+        Returns None if no matching descendant tag is found.
     """
     logger.debug("Resolving Precedes tag for commit: %s", sha)
 
@@ -306,10 +308,14 @@ def is_ancestor(ancestor_sha: str, descendant_sha: str, repo_path: str) -> bool:
 
 def parse_describe_output(raw: str) -> tuple[str, int] | None:
     """
-    Parse the output of `git describe` to extract the base tag and count.
+    Parse the output of `git describe` into a (tag, count) tuple.
+
+    Args:
+        raw: A string like "rel-1.2.3-4-gabcdef0" from `git describe`.
 
     Returns:
-        (base_tag, count) if parse is successful, otherwise None.
+        A tuple of (base_tag, count) if the input includes a commit count,
+        or None if the input appears to be a direct tag (e.g., "rel-1.2.3").
     """
     m = re.match(r"(.+)-(\d+)-g([0-9a-f]{7,})", raw)
     if m:
