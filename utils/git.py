@@ -101,6 +101,16 @@ def _get_children_map(repo_path: str) -> dict:
             children_map[parent] = children
     return children_map
 
+def get_tag_commit_sha(tag: str, repo_path: str) -> str:
+    return subprocess.run(
+        ["git", "rev-list", "-n", "1", tag],
+        capture_output=True,
+        text=True,
+        cwd=repo_path,
+        check=True,
+    ).stdout.strip()
+
+
 def find_follows_tag(sha, repo_path, tag_pattern):
     """
     Return the nearest matching tag reachable from the given commit using `git describe`.
@@ -133,17 +143,11 @@ def find_follows_tag(sha, repo_path, tag_pattern):
         m: re.Match[str] | None = re.match(r"(.+)-(\d+)-g([0-9a-f]{7,})", raw)
         if m:
             base_tag, count, _ = m.groups()
-            tag_sha = subprocess.run(
-                ["git", "rev-list", "-n", "1", base_tag],
-                capture_output=True,
-                text=True,
-                cwd=repo_path,
-                check=True,
-            ).stdout.strip()
-
             logger.debug(
                 "Parsed describe output: base_tag=%s, count=%s", base_tag, count
             )
+
+            tag_sha = get_tag_commit_sha(base_tag, repo_path)
             logger.debug(
                 "Resolved base_tag '%s' to commit SHA: %s", base_tag, tag_sha
             )
