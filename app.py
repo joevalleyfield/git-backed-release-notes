@@ -12,6 +12,8 @@ Usage:
 import argparse
 import logging
 from pathlib import Path
+import time
+import webbrowser
 
 import pandas as pd
 from tornado.web import Application
@@ -75,6 +77,7 @@ def main():
         default=None,
         help="Optional path to the remediation Excel spreadsheet",
     )
+    parser.add_argument("--no-browser", action="store_true")
     parser.add_argument(
         "--port",
         type=int,
@@ -106,7 +109,11 @@ def main():
 
     app = make_app(df, Path(args.repo), args.tag_pattern, excel_path=args.excel_path)
     app.listen(args.port)
-    print(f"Server running at http://localhost:{args.port}", flush=True)
+    url = f"http://localhost:{args.port}"
+    print(f"Server running at {url}", flush=True)
+    if not args.no_browser:
+        time.sleep(0.25)
+        webbrowser.open(url)
 
     IOLoop.current().start()
 
