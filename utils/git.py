@@ -140,9 +140,9 @@ def find_follows_tag(sha, repo_path, tag_pattern):
         )
         raw = result.stdout.strip()
 
-        m: re.Match[str] | None = re.match(r"(.+)-(\d+)-g([0-9a-f]{7,})", raw)
-        if m:
-            base_tag, count, _ = m.groups()
+        parsed = parse_describe_output(raw)
+        if parsed:
+            base_tag, count = parsed
             logger.debug(
                 "Parsed describe output: base_tag=%s, count=%s", base_tag, count
             )
@@ -302,3 +302,17 @@ def is_ancestor(ancestor_sha: str, descendant_sha: str, repo_path: str) -> bool:
         cwd=repo_path,
         check=False,
     ).returncode == 0
+
+
+def parse_describe_output(raw: str) -> tuple[str, int] | None:
+    """
+    Parse the output of `git describe` to extract the base tag and count.
+
+    Returns:
+        (base_tag, count) if parse is successful, otherwise None.
+    """
+    m = re.match(r"(.+)-(\d+)-g([0-9a-f]{7,})", raw)
+    if m:
+        base_tag, count, _ = m.groups()
+        return base_tag, int(count)
+    return None

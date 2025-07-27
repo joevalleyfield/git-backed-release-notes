@@ -87,3 +87,10 @@ def test_is_ancestor(test_repo: Path):
     shas = get_log_shas(test_repo)
     assert is_ancestor(shas[0], shas[2], str(test_repo)) is True
     assert is_ancestor(shas[2], shas[0], str(test_repo)) is False
+
+
+def test_parse_describe_output():
+    from utils.git import parse_describe_output
+    assert parse_describe_output("v1.2.3-4-gabcdef0") == ("v1.2.3", 4)
+    assert parse_describe_output("rel-2-5-7-1-gabc1234") == ("rel-2-5-7", 1)
+    assert parse_describe_output("v1.2.3") is None
