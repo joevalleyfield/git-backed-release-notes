@@ -16,6 +16,23 @@
     <header class="mb-3">
       <h1 class="h4">git show {{ sha }}</h1>
 
+      {% if parents or children %}
+        <nav class="small mb-2">
+          {% if parents %}
+            <strong>Parents:</strong><br>
+            {% for p in parents %}
+              <a href="/commit/{{ p }}">{{ p[:7] }}</a><br>
+            {% end %}
+          {% end %}
+          {% if children %}
+            <strong>Children:</strong><br>
+            {% for c in children %}
+              <a href="/commit/{{ c }}">{{ c[:7] }}</a><br>
+            {% end %}
+          {% end %}
+        </nav>
+      {% end %}
+
       {% if follows %}
         <p class="text-muted"><em>{{ follows.raw }}</em></p>
       {% end %}

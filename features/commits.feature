@@ -1,6 +1,6 @@
-@with_xlsx
 Feature: Commit Detail Page
 
+  @with_xlsx
   Scenario Outline: Commit detail shows correct follows and precedes
     Given a known commit "<commit_label>"
     When I GET the detail page for that commit
@@ -17,3 +17,11 @@ Feature: Commit Detail Page
     Given a known commit "middle"
     When I GET the detail page for that commit
     Then the page should have a back link to the index anchor for that commit
+
+  Scenario: Commit detail page links to parents and children
+    Given a known commit "middle"
+    When I GET the detail page for that commit
+    Then the response should contain "Parents:"
+    And the response should contain "Children:"
+    And the page should contain a link to the parent of that commit
+  

@@ -13,6 +13,9 @@ from types import SimpleNamespace
 
 from tornado.web import RequestHandler
 
+from utils.git import get_commit_parents_and_children
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -263,6 +266,8 @@ class CommitHandler(RequestHandler):
 
         follows, precedes = self.find_closest_tags(sha)
 
+        parents, children = get_commit_parents_and_children(sha, self.repo_path)
+
         df = self.application.settings.get("df")
         store = self.application.settings.get("commit_metadata_store")
 
@@ -293,6 +298,8 @@ class CommitHandler(RequestHandler):
             output_diff=output_diff,
             follows=follows,
             precedes=precedes,
+            parents=parents,
+            children=children,
             commit=commit_row,
         )
 

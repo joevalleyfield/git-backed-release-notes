@@ -5,6 +5,8 @@ from behave import given, when, then  # pylint: disable=no-name-in-module
 from hamcrest import assert_that, contains_string, equal_to, is_not, none, not_
 from bs4 import BeautifulSoup
 
+from utils.git import get_commit_parents_and_children
+
 # pylint: disable=missing-function-docstring
 
 
@@ -67,3 +69,22 @@ def step_impl(context):
 def step_impl(context):
     assert '<label for="release"' in context.response.text
     assert 'name="release"' in context.response.text
+
+@then('the page should contain a link labeled "{label}"')
+def step_impl(context, label):
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(context.response.text, "html.parser")
+    links = soup.find_all("a")
+    assert any(label in link.text for link in links), f"Expected link labeled '{label}' not found."
+
+@then("the page should contain a link to the parent of that commit")
+def step_impl(context):
+    sha = context.commit_sha
+    repo = context.repo_path
+    parents, _ = get_commit_parents_and_children(sha, str(repo))
+
+    soup = BeautifulSoup(context.response.text, "html.parser")
+    link_hrefs = [a["href"] for a in soup.find_all("a", href=True)]
+    for p in parents:
+        expected = f"/commit/{p}"
+        assert expected in link_hrefs, f"Missing link to parent: {expected}"
