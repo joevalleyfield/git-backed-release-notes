@@ -58,3 +58,32 @@ def test_find_precedes_tag(test_repo: Path):
     assert isinstance(result, SimpleNamespace)
     assert result.base_tag == "rel-0.2"
     assert result.tag_sha == shas[2]
+
+
+def test_get_matching_tag_commits(test_repo: Path):
+    shas = get_log_shas(test_repo)
+    create_tag(test_repo, shas[1], "rel-1")
+    create_tag(test_repo, shas[2], "foo-2")  # Should not match
+
+    from utils.git import get_matching_tag_commits
+    result = get_matching_tag_commits(str(test_repo), "rel-*")
+
+    assert isinstance(result, dict)
+    assert len(result) == 1
+    assert shas[1] in result
+    assert result[shas[1]] == "rel-1"
+
+
+def test_get_topo_ordered_commits(test_repo: Path):
+    from utils.git import get_topo_ordered_commits
+    topo = get_topo_ordered_commits(str(test_repo))
+    assert isinstance(topo, list)
+    assert len(topo) >= 3
+    assert topo == get_log_shas(test_repo)
+
+
+def test_is_ancestor(test_repo: Path):
+    from utils.git import is_ancestor
+    shas = get_log_shas(test_repo)
+    assert is_ancestor(shas[0], shas[2], str(test_repo)) is True
+    assert is_ancestor(shas[2], shas[0], str(test_repo)) is False

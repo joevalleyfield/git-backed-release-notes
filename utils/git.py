@@ -177,44 +177,7 @@ def find_precedes_tag(sha, repo_path, tag_pattern):
     logger.debug("Resolving Precedes tag for commit: %s", sha)
 
     try:
-        tag_lines = (
-            subprocess.run(
-                [
-                    "git",
-                    "for-each-ref",
-                    "--format=%(refname:strip=2) %(objectname)",
-                    "refs/tags",
-                ],
-                capture_output=True,
-                text=True,
-                cwd=repo_path,
-                check=True,
-            )
-            .stdout.strip()
-            .splitlines()
-        )
-
-        # Map tag name -> SHA of the *commit* the tag refers to
-        tag_shas = {}
-        for line in tag_lines:
-            parts = line.split()
-            tag_name = parts[0]
-            if fnmatch.fnmatch(tag_name, tag_pattern):
-                tag_commit_sha = subprocess.run(
-                    ["git", "rev-list", "-n", "1", tag_name],
-                    capture_output=True,
-                    text=True,
-                    cwd=repo_path,
-                    check=True,
-                ).stdout.strip()
-                tag_shas[tag_commit_sha] = tag_name
-
-        logger.debug("Collected %d total tags", len(tag_lines))
-        logger.debug(
-            "Filtered %d matching tags for pattern '%s'",
-            len(tag_shas),
-            tag_pattern,
-        )
+        tag_shas = get_matching_tag_commits(repo_path, tag_pattern)
 
         for tag_commit_sha, tag in tag_shas.items():
             logger.debug("Available tag: %s -> %s", tag, tag_commit_sha)
@@ -222,21 +185,11 @@ def find_precedes_tag(sha, repo_path, tag_pattern):
         if not tag_shas:
             return None
 
-        rev_list = (
-            subprocess.run(
-                ["git", "rev-list", "--topo-order", "--reverse", "--all"],
-                capture_output=True,
-                text=True,
-                cwd=repo_path,
-                check=True,
-            )
-            .stdout.strip()
-            .splitlines()
-        )
+        rev_list = get_topo_ordered_commits(repo_path)
 
         logger.debug("rev-list contains %d commits", len(rev_list))
         if sha not in rev_list:
-            logger.debug(
+            logger.warning(
                 "Commit %s not found in rev-list --topo-order --reverse", sha
             )
 
@@ -256,16 +209,7 @@ def find_precedes_tag(sha, repo_path, tag_pattern):
                     sha,
                 )
 
-                is_ancestor = (
-                    subprocess.run(
-                        ["git", "merge-base", "--is-ancestor", descendant_sha, sha],
-                        cwd=repo_path,
-                        check=False,
-                    ).returncode
-                    == 0
-                )
-
-                if is_ancestor:
+                if is_ancestor(descendant_sha, sha, repo_path):
                     logger.debug(
                         "Skipping tag SHA %s — it's actually an ancestor of %s",
                         descendant_sha,
@@ -290,3 +234,67 @@ def find_precedes_tag(sha, repo_path, tag_pattern):
 
     return None
 
+def get_matching_tag_commits(repo_path: str, pattern: str) -> dict[str, str]:
+    """
+    Return a mapping of tag commit SHAs to tag names for tags matching the pattern.
+    """
+    tag_lines = subprocess.run(
+        [
+            "git", "for-each-ref",
+            "--format=%(refname:strip=2) %(objectname)",
+            "refs/tags",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=repo_path,
+        check=True,
+    ).stdout.strip().splitlines()
+
+    logger.debug("Collected %d total tags", len(tag_lines))
+
+    tag_shas = {}
+    for line in tag_lines:
+        parts = line.split()
+        tag_name = parts[0]
+        if fnmatch.fnmatch(tag_name, pattern):
+            tag_commit_sha = subprocess.run(
+                ["git", "rev-list", "-n", "1", tag_name],
+                capture_output=True,
+                text=True,
+                cwd=repo_path,
+                check=True,
+            ).stdout.strip()
+            tag_shas[tag_commit_sha] = tag_name
+
+    logger.debug(
+        "Filtered %d matching tags for pattern '%s'",
+        len(tag_shas),
+        pattern,
+    )
+
+    return tag_shas
+
+
+def get_topo_ordered_commits(repo_path: str) -> list[str]:
+    """
+    Return all commit SHAs in topological order (oldest to newest).
+    """
+    result = subprocess.run(
+        ["git", "rev-list", "--topo-order", "--reverse", "--all"],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=repo_path,
+    )
+    return result.stdout.strip().splitlines()
+
+
+def is_ancestor(ancestor_sha: str, descendant_sha: str, repo_path: str) -> bool:
+    """
+    Return True if ancestor_sha is an ancestor of descendant_sha.
+    """
+    return subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor_sha, descendant_sha],
+        cwd=repo_path,
+        check=False,
+    ).returncode == 0
