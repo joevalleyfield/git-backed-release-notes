@@ -1,9 +1,13 @@
 import logging 
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import quote
 
 import pandas as pd
 from tornado.web import RequestHandler, HTTPError
+
+from utils.git import extract_commits_from_git
+from utils.issues import find_commits_referring_to_issue
 
 logger = logging.getLogger(__name__)
 # logger.addHandler(logging.NullHandler())  # safe default
@@ -49,10 +53,28 @@ class IssueDetailHandler(RequestHandler):
                 logger.warning("Failed to reload commit metadata store: %s", e)
             df = commit_metadata_store.df
             matches = df[df["issue"] == slug]
-            linked_commits = matches["sha"].tolist()
+            sha_list = matches["sha"].tolist()
 
-        logger.debug("linked_commits: %s", linked_commits)
+        # Scan all commits and filter only those matching spreadsheet-linked SHAs
+        scanned_commits = [
+            SimpleNamespace(**row)
+            for row in extract_commits_from_git(repo_path)
+        ]
 
+        linked_commits = [
+            row for row in scanned_commits
+            if row.sha in sha_list
+        ]
+
+        logger.debug("linked_commits: %s", sha_list)
+
+        referring = find_commits_referring_to_issue(slug, scanned_commits)
+
+        # Merge in any inferred rows not already included
+        for row in referring:
+            if row.sha not in {c.sha for c in linked_commits}:
+                linked_commits.append(row)
+        
         self.render(
             "issue.html",
             slug=slug,

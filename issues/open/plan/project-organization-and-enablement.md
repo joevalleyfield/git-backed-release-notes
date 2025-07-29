@@ -71,14 +71,12 @@ Benefits:
 
 Document or expose the structure:
 
-```text
-project.yaml
-|
-|- issues/
-|- features/
-|- templates/
-|- handlers/
-```
+    project.yaml
+    |
+    |- issues/
+    |- features/
+    |- templates/
+    |- handlers/
 
 Benefits:
 

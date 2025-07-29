@@ -7,12 +7,14 @@ commit using `git describe`, `rev-list`, and `merge-base`.
 
 import fnmatch
 import logging
+from pathlib import Path
 import re
 import subprocess
 
 from tornado.web import RequestHandler
 
 from utils.git import get_commit_parents_and_children, find_follows_tag, find_precedes_tag
+from utils.commit_parsing import extract_issue_slugs
 
 
 logger = logging.getLogger(__name__)
@@ -95,6 +97,35 @@ class CommitHandler(RequestHandler):
             header = output[:split_index].strip()
             output_diff = output[split_index:].strip()
 
+        # Extract paths from diff headers like: diff --git a/foo.py b/foo.py
+        diff_lines = output_diff.splitlines()
+        paths = []
+
+        for line in diff_lines:
+            if line.startswith("diff --git"):
+                match = re.match(r"diff --git a/(.*?) b/", line)
+                if match:
+                    paths.append(match.group(1))
+            
+        primary_issue, slugs = extract_issue_slugs(header)
+        existing_issues = []
+
+        for slug in slugs:
+            # Open and closed issues
+            for subdir in ("open", "closed"):
+                issue_path = self.repo_path / "issues" / subdir / f"{slug}.md"
+                if issue_path.exists():
+                    existing_issues.append(slug)
+                    break  # Found in either location
+
+        # Add slugs implied by touched issue files
+        for path in paths:
+            if path.startswith("issues/open/") or path.startswith("issues/closed/"):
+                if path.endswith(".md"):
+                    slug = Path(path).stem
+                    if slug not in slugs:
+                        existing_issues.append(slug)
+
         self.render(
             "commit.html",
             sha=sha,
@@ -105,6 +136,8 @@ class CommitHandler(RequestHandler):
             parents=parents,
             children=children,
             commit=commit_row,
+            linked_issues=existing_issues,
+            primary_issue=primary_issue if primary_issue in existing_issues else None,
         )
 
     def tag_matches(self, tag):

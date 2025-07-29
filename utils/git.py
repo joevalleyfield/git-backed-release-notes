@@ -21,16 +21,15 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
     """
     Extract commit metadata directly from the Git repository.
 
-    Returns a list of dictionaries with keys: id, sha, release, message, and author_date.
-    Used when no spreadsheet is provided.
+    Returns a list of dictionaries with keys:
+    id, sha, release, message, author_date, and touched_paths.
     """
     result = subprocess.run(
         [
-            "git",
-            "-C",
-            repo_path,
-            "log",
-            "--pretty=format:%H%x09%ad%x09%s",
+            "git", "-C", repo_path, "log",
+            "--reverse", "-z",
+            "--name-only",
+            "--pretty=format:%H%x09%ad%x09%s%x00",
             "--date=iso",
         ],
         capture_output=True,
@@ -38,18 +37,46 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
         check=True,
     )
 
+    logger.debug("raw git log output (escaped): %r", result.stdout)
+
+    tokens = result.stdout.strip("\0").split("\0")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("split into %d tokens", len(tokens))
+        for i, token in enumerate(tokens):
+            logger.debug("token[%d]: %r", i, token)
+
     rows = []
-    for idx, line in enumerate(result.stdout.strip().splitlines()):
-        sha, author_date, message = line.split("\t", 2)
-        rows.append(
-            {
-                "id": idx,
-                "sha": sha,
-                "release": "",  # no spreadsheet = no release label
-                "message": message,
-                "author_date": author_date,
-            }
-        )
+    idx = 0
+    i = 0
+    while i < len(tokens):
+        header = tokens[i]
+        if header.count("\t") < 2:
+            logger.warning("Skipping malformed header token: %r", header)
+            i += 1
+            continue
+
+        sha, author_date, message = header.split("\t", 2)
+        i += 1
+
+        # Collect touched paths until next header or end
+        paths = []
+        while i < len(tokens) and tokens[i].count("\t") < 2:
+            path = tokens[i].strip()
+            if path:
+                paths.append(path)
+            i += 1
+
+        logger.debug("commit #%d: sha=%s, message=%r, files=%r", idx, sha, message, paths)
+        rows.append({
+            "id": idx,
+            "sha": sha,
+            "author_date": author_date,
+            "message": message,
+            "release": "",
+            "touched_paths": paths,
+        })
+        idx += 1
+
     return rows
 
 

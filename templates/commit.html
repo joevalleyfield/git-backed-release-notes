@@ -73,6 +73,15 @@
       <pre class="bg-light p-3 border rounded">{{ output_header }}</pre>
     </section>
 
+    {% if linked_issues %}
+    <div>
+      Related Issues:
+      {% for slug in linked_issues %}
+      <a href="/issue/{{ slug }}">{{ slug }}</a>
+      {% end %}
+    </div>
+    {% end %}
+
     <section class="mb-4" aria-labelledby="commit-diff-title">
       <h2 id="commit-diff-title" class="visually-hidden">Diff</h2>
       <div id="diff" class="border rounded">

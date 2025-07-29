@@ -5,11 +5,15 @@ Renders commit metadata loaded from a spreadsheet or extracted directly from Git
 and passes it to the template for interactive browsing.
 """
 
+import logging
 import pandas as pd
 from tornado.web import RequestHandler
 
 from utils.git import extract_commits_from_git
 from utils.metadata_store import CommitMetadataStore
+
+
+logger = logging.getLogger(__name__)
 
 
 class MainHandler(RequestHandler):
@@ -39,12 +43,21 @@ class MainHandler(RequestHandler):
             rows = self.df.to_dict(orient="records")
         else:
             git_rows = extract_commits_from_git(self.repo_path)
+
+            logger.info("Extracted %d git commits", len(git_rows))
+            for row in git_rows:
+                logger.info("GIT SHA: %s — %s", row["sha"], row["message"])
+
             metadata_df = self.store.df.fillna("")  # from DataFrameCommitMetadataStore
 
             if not metadata_df.empty:
                 metadata = metadata_df.set_index("sha").to_dict(orient="index")
             else:
                 metadata = {}
+
+            logger.info("Metadata rows: %d", len(metadata_df))
+            for sha in metadata_df["sha"]:
+                logger.info("META SHA: %s", sha)
 
             # Merge
             rows = []

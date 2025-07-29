@@ -16,12 +16,12 @@ This feature implements automatic detection and linking behavior when a commit m
 
 ## Acceptance Criteria
 
-- [ ] Commits with message text that includes `#issue-slug` should:
-  - [ ] Link to `/issue/issue-slug` in the commit detail view
-  - [ ] Appear in the referring commit list on the issue detail page
-- [ ] References can occur mid-line (e.g., `Fixes #my-feature`) or standalone
-- [ ] Parsing should support multiple references in a single message
-  - [ ] One of these should be treated as the *primary* issue for attribution
+- [X] Commits with message text that includes `#issue-slug` should:
+  - [X] Link to `/issue/issue-slug` in the commit detail view
+  - [X] Appear in the referring commit list on the issue detail page
+- [X] References can occur mid-line (e.g., `Fixes #my-feature`) or standalone
+- [X] Parsing should support multiple references in a single message
+  - [X] One of these should be treated as the *primary* issue for attribution
 
 ## Design Notes
 

@@ -71,6 +71,7 @@ class ServerProcess:
 
         argv += ["--repo", str(repo_path), "--port", str(port)]
         argv += ["--no-browser"]
+        argv += ["--debug"]
 
         proc = subprocess.Popen(
             argv,

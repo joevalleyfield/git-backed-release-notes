@@ -57,8 +57,8 @@
       <section>
         <h2 class="h5">Linked Commits</h2>
         <ul class="list-group">
-          {% for sha in linked_commits %}
-            <li class="list-group-item"><a href="/commit/{{ sha }}">{{ sha }}</a></li>
+          {% for row in linked_commits %}
+            <li class="list-group-item"><a href="/commit/{{ row.sha }}">{{ row.sha[:7] }}</a>: {{ row.message }}</li>
           {% end %}
         </ul>
       </section>

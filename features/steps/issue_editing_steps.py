@@ -88,6 +88,11 @@ def step_impl(context):
     match = soup.find("a", href="/issue/foo-bar", string="foo-bar")
     assert match is not None, "Expected link to /issue/foo-bar with text 'foo-bar' not found"
 
+@then('I should see a link to "/issue/{slug}"')
+def step_impl(context, slug):
+    soup = BeautifulSoup(context.response.text, "html.parser")
+    match = soup.find("a", href=f"/issue/{slug}")
+    assert match is not None, f"Expected link to /issue/{slug} not found"
 
 # @when('the user updates the issue content to include "{text}"')
 # def step_impl(context, text):
@@ -133,3 +138,9 @@ def step_impl(context, slug):
 def step_impl(context, slug, text):
     with open(context.repo_path / f"issues/closed/{slug}.md", encoding="utf-8") as f:
         assert text in f.read()
+
+@given('an uncommitted issue file named "{filename}" with contents')
+def step_impl(context, filename):
+    path = context.repo_path / "issues" / "open" / filename
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(context.text, encoding="utf-8")
