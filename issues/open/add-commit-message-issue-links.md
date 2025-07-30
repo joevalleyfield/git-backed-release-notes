@@ -26,24 +26,41 @@ This feature implements automatic detection and linking behavior when a commit m
 ## Design Notes
 
 This feature adds lightweight linking between commits and issues by parsing
-`#slug` references in commit messages. When a commit references multiple issues,
-the system:
+references to issue slugs in commit messages. The system recognizes:
 
-- Links to **all referenced slugs** for context and navigation
+- `#slug` style mentions
+- `slug.md` file-style mentions
+- plain kabob-case slugs (e.g., `my-feature`, `foo-bar-baz`)
+
+When a commit references multiple issues, the system:
+
+- Links to **all matched slugs** in the commit detail view
 - Chooses **one primary issue** for attribution when possible
 
 ### Directive Matching
 
-The parser should be **lenient** and focus on capturing intent over format. Recognized directives include verbs like:
+The parser is designed to be **lenient** and real-world friendly. Recognized
+directive verbs include:
 
 - `fix`, `fixes`, `fixed`
 - `close`, `closes`, `closed`
 - `resolve`, `resolves`, `resolved`
 - `implement`, `implements`, `implemented`
 
-These may appear with or without a colon (e.g., `Fixes #abc`, `Resolves: #def`),
-and are matched case-insensitively. This ensures compatibility with real-world
-commit styles and behaviors seen in GitHub, GitLab, and Jira.
+These verbs are matched case-insensitively, with or without a colon, and can be
+followed by:
+
+- `#slug`
+- `slug.md`
+- `some-slug` (kabob-case only)
+
+For example, the following lines all identify `my-feature` as a reference:
+
+- `Fixes #my-feature`
+- `Resolves my-feature.md`
+- `Implements: my-feature`
+
+Directive-based matches are used to determine *primary attribution*.
 
 Additional mentions like `#related-thing` will still be recognized and linked,
 but only directive matches influence primary attribution.

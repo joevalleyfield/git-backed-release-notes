@@ -27,7 +27,8 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
     result = subprocess.run(
         [
             "git", "-C", repo_path, "log",
-            "--reverse", "-z",
+            # "--reverse",
+            "-z",
             "--name-only",
             "--pretty=format:%H%x09%ad%x09%s%x00",
             "--date=iso",
