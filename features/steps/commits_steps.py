@@ -1,6 +1,8 @@
 """Steps for commits.feature."""
 
+import re
 import requests
+
 from behave import given, when, then  # pylint: disable=no-name-in-module
 from hamcrest import assert_that, contains_string, equal_to, is_not, none, not_
 from bs4 import BeautifulSoup
@@ -48,6 +50,12 @@ def step_response_shows_precedes(context, precedes_tag):
         assert_that(context.response.text, contains_string("Precedes:"))
         assert_that(context.response.text, contains_string(precedes_tag))
         assert_that(context.response.text, contains_string(expected_target_sha))
+
+
+@then("the page should contain a describe name")
+def step_impl(context):
+    describe = context.response.text
+    assert re.search(r"rel-\d+\.\d+(?:-\d+-g[0-9a-f]{7})?", describe)
 
 
 @then("the page should have a back link to the index anchor for that commit")

@@ -250,6 +250,21 @@ def find_precedes_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNames
 
     return None
 
+
+def get_describe_name(repo_path: str, sha: str, match: str = "rel-*") -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--match", match, sha],
+            capture_output=True,
+            text=True,
+            cwd=repo_path,
+            check=True,
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+
 def get_matching_tag_commits(repo_path: str, pattern: str) -> dict[str, str]:
     """
     Return a mapping of tag commit SHAs to tag names for tags matching the pattern.

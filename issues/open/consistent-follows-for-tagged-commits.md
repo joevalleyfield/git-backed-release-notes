@@ -35,3 +35,8 @@ Expected:
 - Enables symmetric and intuitive graph traversal.
 - Clarifies commit-release lineage regardless of tagging.
 - Simplifies test logic and release annotation features.
+
+## Comments
+
+2025.08.03.Su 1006
+Human readable ref description disabled in implementation commit and re-enabled with follow-up.

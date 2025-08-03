@@ -6,6 +6,7 @@ Feature: Commit Detail Page
     When I GET the detail page for that commit
     Then the page should show follows "<follows_tag>"
     And the page should show precedes "<precedes_tag>"
+    And the page should contain a describe name
 
     Examples:
       | commit_label | follows_tag | precedes_tag |

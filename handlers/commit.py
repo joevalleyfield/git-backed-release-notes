@@ -13,7 +13,7 @@ import subprocess
 
 from tornado.web import RequestHandler
 
-from utils.git import get_commit_parents_and_children, find_follows_tag, find_precedes_tag
+from utils.git import get_commit_parents_and_children, find_follows_tag, find_precedes_tag, get_describe_name
 from utils.commit_parsing import extract_issue_slugs
 
 
@@ -41,6 +41,11 @@ class CommitHandler(RequestHandler):
         follows = find_follows_tag(sha, self.repo_path, pattern)
         precedes = find_precedes_tag(sha, self.repo_path, pattern)
         return follows, precedes
+
+    def get_describe_name(self, sha):
+        pattern = self.application.settings["tag_pattern"]
+        describe_name = get_describe_name(self.repo_path, sha, pattern)
+        return describe_name
 
     def get(self, sha):
         """
@@ -71,6 +76,7 @@ class CommitHandler(RequestHandler):
             return
 
         follows, precedes = self.find_closest_tags(sha)
+        describe_name = self.get_describe_name(sha)
 
         parents, children = get_commit_parents_and_children(sha, self.repo_path)
 
@@ -133,6 +139,7 @@ class CommitHandler(RequestHandler):
             output_diff=output_diff,
             follows=follows,
             precedes=precedes,
+            describe_name=describe_name,
             parents=parents,
             children=children,
             commit=commit_row,
