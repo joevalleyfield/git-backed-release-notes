@@ -2,27 +2,8 @@ import subprocess
 from pathlib import Path
 import pytest
 
+from tests.helpers.git_fixtures import create_tag, test_repo
 from utils.git import get_commit_parents_and_children
-
-
-@pytest.fixture
-def test_repo(tmp_path: Path) -> Path:
-    subprocess.run(["git", "init"], cwd=tmp_path, check=True)
-    (tmp_path / "file.txt").write_text("a\n")
-    subprocess.run(["git", "add", "file.txt"], cwd=tmp_path, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=tmp_path, check=True)
-
-    (tmp_path / "file.txt").write_text("b\n")
-    subprocess.run(["git", "commit", "-am", "second"], cwd=tmp_path, check=True)
-
-    (tmp_path / "file.txt").write_text("c\n")
-    subprocess.run(["git", "commit", "-am", "third"], cwd=tmp_path, check=True)
-
-    return tmp_path
-
-
-def create_tag(repo: Path, sha: str, tagname: str):
-    subprocess.run(["git", "tag", tagname, sha], cwd=repo, check=True)
 
 
 def test_get_describe_name_returns_expected_string(test_repo: Path):
