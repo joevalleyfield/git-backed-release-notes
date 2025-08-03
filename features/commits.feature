@@ -11,7 +11,7 @@ Feature: Commit Detail Page
       | commit_label | follows_tag | precedes_tag |
       | initial      | (none)      | rel-0.2      |
       | middle       | rel-0.1     | rel-0.2      |
-      | latest       | (none)      | (none)       |
+      | latest       | rel-0.1      | (none)       |
 
   Scenario: Commit detail back link targets index anchor
     Given a known commit "middle"

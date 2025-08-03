@@ -1,3 +1,21 @@
+"""
+Test Plan: Tag Resolution Logic
+
+This module verifies resolution of tag relationships in a Git commit graph.
+
+Functions under test:
+- find_follows_tag(): identifies the nearest preceding tag.
+- find_precedes_tag(): identifies the nearest descendant tag.
+- get_matching_tag_commits(): filters matching tags.
+- get_topo_ordered_commits(): confirms topo sort matches rev-list.
+- is_ancestor(): verifies ancestry relationship between commits.
+- parse_describe_output(): parses `git describe` output.
+
+Key behaviors tested:
+- Tagged and untagged commits resolving to earlier/later tags
+- Edge cases: no tags, multiple tags, out-of-pattern tags
+- Symmetry between Follows and Precedes
+"""
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -39,15 +57,48 @@ def create_tag(repo: Path, sha: str, tagname: str):
     subprocess.run(["git", "tag", tagname, sha], cwd=repo, check=True)
 
 
-def test_find_follows_tag(test_repo: Path):
-    shas = get_log_shas(test_repo)
-    create_tag(test_repo, shas[0], "rel-0.1")
+@pytest.mark.parametrize(
+    "tag_map, target_index, expected_tag",
+    [
+        # Only the first commit is tagged
+        ({"rel-0.1": 0}, 1, "rel-0.1"),  # middle follows rel-0.1
+        ({"rel-0.1": 0}, 2, "rel-0.1"),  # latest follows rel-0.1
 
-    result = find_follows_tag(shas[1], str(test_repo), "rel-*")
-    assert isinstance(result, SimpleNamespace)
-    assert result.base_tag == "rel-0.1"
-    assert result.count == 1
-    assert result.tag_sha == shas[0]
+        # First and third commits are tagged
+        ({"rel-0.1": 0, "rel-0.2": 2}, 1, "rel-0.1"),  # middle still follows rel-0.1
+        ({"rel-0.1": 0, "rel-0.2": 2}, 2, "rel-0.1"),  # latest (tagged) still follows rel-0.1
+
+        # Only third commit is tagged
+        ({"rel-0.2": 2}, 1, None),  # middle has no preceding tag
+        ({"rel-0.2": 2}, 2, None),  # latest has no preceding tag
+
+        # No tags at all
+        ({}, 1, None),
+        ({}, 2, None),
+    ]
+)
+def test_find_follows_tag(test_repo: Path, tag_map, target_index, expected_tag):
+    """
+    Verifies that find_follows_tag identifies the nearest preceding tag.
+
+    - Tagged commits should still report the prior tag in Follows.
+    - Untagged commits should report the most recent earlier tag.
+    - Commits with no preceding tag should return None.
+    - Covers cases with one, multiple, or no tags.
+    """
+    shas = get_log_shas(test_repo)
+
+    for tag, index in tag_map.items():
+        create_tag(test_repo, shas[index], tag)
+
+    result = find_follows_tag(shas[target_index], str(test_repo), "rel-*")
+
+    if expected_tag is None:
+        assert result is None
+    else:
+        assert isinstance(result, SimpleNamespace)
+        assert result.base_tag == expected_tag
+        assert result.tag_sha == shas[tag_map[expected_tag]]
 
 
 def test_find_follows_tag_returns_none_if_no_match(test_repo: Path):
@@ -58,14 +109,47 @@ def test_find_follows_tag_returns_none_if_no_match(test_repo: Path):
     assert result is None
 
 
-def test_find_precedes_tag(test_repo: Path):
-    shas = get_log_shas(test_repo)
-    create_tag(test_repo, shas[2], "rel-0.2")
+@pytest.mark.parametrize(
+    "tag_map, target_index, expected_tag",
+    [
+        # Only the last commit is tagged
+        ({"rel-0.2": 2}, 0, "rel-0.2"),  # initial precedes rel-0.2
+        ({"rel-0.2": 2}, 1, "rel-0.2"),  # middle precedes rel-0.2
 
-    result = find_precedes_tag(shas[1], str(test_repo), "rel-*")
-    assert isinstance(result, SimpleNamespace)
-    assert result.base_tag == "rel-0.2"
-    assert result.tag_sha == shas[2]
+        # First and third commits are tagged
+        ({"rel-0.1": 0, "rel-0.2": 2}, 1, "rel-0.2"),  # middle still precedes rel-0.2
+        ({"rel-0.1": 0, "rel-0.2": 2}, 0, "rel-0.2"),  # rel-0.1 precedes rel-0.2
+
+        # Only the first commit is tagged
+        ({"rel-0.1": 0}, 1, None),  # middle has no descendant tag
+        ({"rel-0.1": 0}, 2, None),  # latest has no descendant tag
+
+        # No tags at all
+        ({}, 0, None),
+        ({}, 1, None),
+    ]
+)
+def test_find_precedes_tag(test_repo: Path, tag_map, target_index, expected_tag):
+    """
+    Verifies that find_precedes_tag identifies the nearest descendant tag.
+
+    - Both tagged and untagged commits should point to the next tag, if one exists.
+    - Commits without any following tag should return None.
+    - Covers cases with one, multiple, or no tags.
+    """
+    shas = get_log_shas(test_repo)
+
+    for tag, index in tag_map.items():
+        create_tag(test_repo, shas[index], tag)
+
+    result = find_precedes_tag(shas[target_index], str(test_repo), "rel-*")
+
+    if expected_tag is None:
+        assert result is None
+    else:
+        assert isinstance(result, SimpleNamespace)
+        assert result.base_tag == expected_tag
+        assert result.tag_sha == shas[tag_map[expected_tag]]
 
 
 def test_find_precedes_tag_returns_none_if_no_descendant_match(test_repo: Path):

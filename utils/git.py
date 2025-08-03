@@ -136,66 +136,48 @@ def get_tag_commit_sha(tag: str, repo_path: str) -> str:
         text=True,
         cwd=repo_path,
         check=True,
-    ).stdout.strip()
+    ).stdout.strip
 
 
-def find_follows_tag(sha, repo_path, tag_pattern):
+def find_follows_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNamespace | None:
     """
-    Find the nearest matching tag reachable from the given commit using `git describe`.
+    Finds the nearest matching tag that precedes the given commit (excluding its own tag).
 
     Returns:
         A SimpleNamespace with:
-            - raw (str): the full `git describe` output string
             - base_tag (str): the matching tag name
-            - count (int): number of commits since the tag
             - tag_sha (str): commit SHA of the tag
-        Returns None if no matching tag is found.
+            - count (int): number of commits between the tag and the target
+        Returns None if no matching prior tag is found.
     """
     logger.debug("Resolving Follows tag for commit: %s", sha)
+
     try:
-        result = subprocess.run(
-            [
-                "git",
-                "describe",
-                "--tags",
-                "--match",
-                tag_pattern,
-                sha,
-            ],
-            capture_output=True,
-            text=True,
-            cwd=repo_path,
-            check=True,
-        )
-        raw = result.stdout.strip()
+        tag_shas = get_matching_tag_commits(repo_path, tag_pattern)
+        if not tag_shas:
+            return None
 
-        parsed = parse_describe_output(raw)
-        if parsed:
-            base_tag, count = parsed
-            logger.debug(
-                "Parsed describe output: base_tag=%s, count=%s", base_tag, count
-            )
+        rev_list = get_topo_ordered_commits(repo_path)
+        if sha not in rev_list:
+            logger.warning("Commit %s not found in topo-ordered rev-list", sha)
+            return None
 
-            tag_sha = get_tag_commit_sha(base_tag, repo_path)
-            logger.debug(
-                "Resolved base_tag '%s' to commit SHA: %s", base_tag, tag_sha
-            )
+        i = rev_list.index(sha)
+        prior_shas = rev_list[:i][::-1]  # Walk backwards from sha
 
-            return SimpleNamespace(
-                raw=raw, base_tag=base_tag, count=int(count), tag_sha=tag_sha
-            )
-        else:
-            # Directly tagged
-            logger.debug(
-                "Commit %s is directly tagged with '%s'; omitting Follows", sha, raw
-            )
-            return SimpleNamespace(
-                raw=raw, base_tag=raw, count=0, tag_sha=sha  # The commit itself
-            )
+        for count, ancestor_sha in enumerate(prior_shas, 1):
+            if ancestor_sha in tag_shas:
+                tag = tag_shas[ancestor_sha]
+                logger.debug("Found Follows tag: %s at SHA %s", tag, ancestor_sha)
+                return SimpleNamespace(base_tag=tag, tag_sha=ancestor_sha, count=count)
 
-    except subprocess.CalledProcessError as e:
-        logger.debug("git describe failed for commit %s: %s", sha, e)
+        logger.debug("No Follows tag found before commit %s", sha)
         return None
+
+    except subprocess.SubprocessError as e:
+        logger.debug("Error resolving Follows for %s: %s", sha, e)
+        return None
+
 
 def find_precedes_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNamespace | None:
     """
