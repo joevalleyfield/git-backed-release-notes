@@ -1,3 +1,18 @@
+"""
+Test Plan: Commit Message Parsing
+
+This module verifies parsing of commit messages for issue references and tags.
+
+Functions under test:
+- extract_issue_slugs(): extracts issue slugs and primary reference.
+- DIRECTIVE_RE / SLUG_RE: regular expressions for parsing message content.
+
+Key behaviors tested:
+- Recognition of directive-based issue references (e.g., "Fixes #foo-bar")
+- Support for variations like "slug.md" and plain kabob-case
+- Correct identification of a single primary issue (earliest directive match)
+- Handling of messages with no valid slugs or ambiguous formatting
+"""
 import pytest
 from utils.commit_parsing import extract_issue_slugs
 
