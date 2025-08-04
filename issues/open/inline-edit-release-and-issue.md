@@ -1,11 +1,27 @@
-# Support inline editing of release and issue fields on index view
+# 📎 Feature: Inline Editing on Index
 
-Allow users to edit the `release` and `issue` fields directly from the index view, rather than navigating to the commit detail page.
+```yaml
+tags: [commit-editing, index-view, inline-editing]
+status: open
+```
 
-This might be implemented as:
+## Goal
 
-- Making the release and issue columns editable via `contenteditable`, `<input>`, or similar widgets
-- Submitting changes via AJAX or form submission on blur or Enter
-- Optionally indicating edited rows visually or showing save/undo buttons
+Allow users to edit the `release` and `issue` fields directly from the commit index view, without navigating to the commit detail page.
 
-Would greatly improve UX for quick batch editing.
+## Behavior
+
+- Release and issue fields should appear editable (e.g., `contenteditable`, `<input>`, or `<textarea>`)
+- Changes may be submitted:
+  - On blur
+  - On pressing Enter
+  - Via explicit save/cancel buttons (optional)
+- Optimistic UI updates are allowed
+- Rows with unsaved or recently saved changes may be visually indicated
+- Keyboard focus should be preserved after editing if possible
+
+## Rationale
+
+- Enables rapid metadata entry and correction
+- Reduces context switching between index and detail views
+- Makes batch editing practical
