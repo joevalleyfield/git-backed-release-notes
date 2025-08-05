@@ -12,9 +12,9 @@ Allow users to edit the `release` and `issue` fields directly from the commit in
 ## Behavior
 
 - [x] Release and issue fields should appear editable (e.g., `contenteditable`, `<input>`, or `<textarea>`)
-- [ ] Changes may be submitted:
+- [x] Changes may be submitted:
   - On blur
-  - On pressing Enter
+  - [x] On pressing Enter
   - Via explicit save/cancel buttons (optional)
 - Optimistic UI updates are allowed
 - [ ] Rows with unsaved or recently saved changes may be visually indicated

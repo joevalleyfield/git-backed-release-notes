@@ -51,7 +51,11 @@ class UpdateCommitHandler(RequestHandler):
         except KeyError as e:
             raise HTTPError(404, str(e)) from e
 
-        self.redirect(f"/commit/{sha}")
+        next_url = self.get_argument("next", default=None)
+        if next_url:
+            self.redirect(next_url)
+        else:
+            self.redirect(f"/commit/{sha}")
 
     def data_received(self, chunk):
         pass  # Required by base class, not used

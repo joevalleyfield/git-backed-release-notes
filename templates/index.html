@@ -58,7 +58,9 @@
           </tbody>
         </table>
         {% for row in rows %}
-          <form id="form-{{ row['sha'] }}" method="POST" action="/commit/{{ row['sha'] }}/update"></form>
+          <form id="form-{{ row['sha'] }}" method="POST" action="/commit/{{ row['sha'] }}/update?next=/">
+            <button type="submit" hidden>Submit</button>
+          </form>
         {% end %}
       </div>
     </section>
