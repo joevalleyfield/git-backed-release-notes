@@ -34,19 +34,32 @@
           <tbody>
             {% for row in rows %}
             <tr id="sha-{{ row['sha'][:7] }}">
+
               <td><a href="/commit/{{ row['sha'] }}">{{ row["sha"][:7] }}</a></td>
               <td>{{ row["message"] }}</td>
+
               <td>
-                {% if "issue" in row and row["issue"] %}
-                  <a href="/issue/{{ row['issue'] }}">{{ row['issue'] }}</a>
+                <input name="issue" form="form-{{ row['sha'] }}" value="{{ row.get('issue', '') }}">
+                {% if row.get("issue") %}
+                  <a href="/issue/{{ row['issue'] }}">🔗</a>
                 {% end %}
               </td>
-              <td>{{ row["release"] }}</td>
+
+              <td>
+                <input name="release" form="form-{{ row['sha'] }}" value="{{ row.get('release', '') }}">
+                {% if row.get("release") %}
+                  <a href="/release/{{ row['release'] }}">🔗</a>
+                {% end %}
+              </td>
+
               <td>{{ row["author_date"] }}</td>
             </tr>
             {% end %}
           </tbody>
         </table>
+        {% for row in rows %}
+          <form id="form-{{ row['sha'] }}" method="POST" action="/commit/{{ row['sha'] }}/update"></form>
+        {% end %}
       </div>
     </section>
   </main>

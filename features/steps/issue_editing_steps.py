@@ -82,25 +82,12 @@ def step_impl(context):
     assert match.iloc[0]["issue"] == "foo-bar"
 
 
-@then('I should see a link to "/issue/foo-bar" with text "foo-bar"')
-def step_impl(context):
+@then('I should see a link to "{url}"')
+def step_impl(context, url):
     soup = BeautifulSoup(context.response.text, "html.parser")
-    match = soup.find("a", href="/issue/foo-bar", string="foo-bar")
-    assert match is not None, "Expected link to /issue/foo-bar with text 'foo-bar' not found"
+    match = soup.find("a", href=url)
+    assert match is not None, f"Expected link to {url} not found"
 
-@then('I should see a link to "/issue/{slug}"')
-def step_impl(context, slug):
-    soup = BeautifulSoup(context.response.text, "html.parser")
-    match = soup.find("a", href=f"/issue/{slug}")
-    assert match is not None, f"Expected link to /issue/{slug} not found"
-
-# @when('the user updates the issue content to include "{text}"')
-# def step_impl(context, text):
-#     slug = context.issue_slug
-#     path: Path = context.repo_path / "issues/open" / f"{slug}.md"
-#     body = path.read_text(encoding="utf-8") + f"\n{text}\n"
-#     context.edited_issue_slug = slug
-#     context.edited_issue_content = body
 
 @when('the user updates the issue content to include "{text}"')
 def step_impl(context, text):

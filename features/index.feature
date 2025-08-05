@@ -12,7 +12,7 @@ Feature: View commit index
     Then the response should contain "Commit"
 
   @with_xlsx
-  Scenario: Issue slug is shown in the index table
+  Scenario: Issue slug is shown in the index table 
     Given the server is running
     When I GET the root page
     Then the response should contain the issue slug "display-issue-slugs-in-index"
@@ -20,7 +20,7 @@ Feature: View commit index
   Scenario: Issue slug is shown and linked on the commit index
     Given a known commit "example" with issue "foo-bar"
     When I visit the commit index
-    Then I should see a link to "/issue/foo-bar" with text "foo-bar"
+    Then I should see a link to "/issue/foo-bar"
 
   @with_xlsx
   Scenario: Index rows have anchor IDs for back link targeting

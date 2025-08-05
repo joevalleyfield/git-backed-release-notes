@@ -83,16 +83,9 @@ class CommitHandler(RequestHandler):
         df = self.application.settings.get("df")
         store = self.application.settings.get("commit_metadata_store")
 
-        if df is not None:
-            match = df[df["sha"] == sha]
-        elif hasattr(store, "df"):
-            match = store.df[store.df["sha"] == sha]
-        else:
-            match = None
+        commit_row = store.get_row(sha)
 
-        if match is not None and not match.empty:
-            commit_row = match.iloc[0].fillna("").to_dict()
-        else:
+        if commit_row is None:
             commit_row = {"sha": sha, "issue": "", "release": ""}
 
         split_index = output.find("diff --git")

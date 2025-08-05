@@ -16,6 +16,10 @@ class CommitMetadataStore(ABC):
     """Abstract base class for reading and writing commit metadata (e.g. issue, release)."""
 
     @abstractmethod
+    def get_row(self, sha: str) -> dict | None:
+        ...
+
+    @abstractmethod
     def set_issue(self, sha: str, issue: str) -> None:
         ...
 
@@ -32,23 +36,33 @@ class SpreadsheetCommitMetadataStore(CommitMetadataStore):
     """Backs commit metadata with a spreadsheet DataFrame and Excel path."""
 
     def __init__(self, df: pd.DataFrame, excel_path: Path):
-        self.df = df
+        self._df = df
         self.excel_path = Path(excel_path)
 
-    def set_issue(self, sha: str, issue: str) -> None:
-        row_idx = get_row_index_by_sha(self.df, sha)
-        if row_idx is None:
-            raise KeyError(f"No spreadsheet row found for commit {sha}")
-        self.df.at[row_idx, "issue"] = issue
+    def _ensure_row(self, sha: str):
+        """Ensure that a row exists for the given SHA; insert one if missing."""
+        if sha not in self._df["sha"].values:
+            self._df = pd.concat([
+                self._df,
+                pd.DataFrame([{"sha": sha, "issue": "", "release": ""}])
+            ], ignore_index=True)
 
-    def set_release(self, sha: str, release: str) -> None:
-        row_idx = get_row_index_by_sha(self.df, sha)
-        if row_idx is None:
-            raise KeyError(f"No spreadsheet row found for commit {sha}")
-        self.df.at[row_idx, "release"] = release
+    def get_row(self, sha: str) -> dict | None:
+        match = self._df[self._df["sha"] == sha]
+        if not match.empty:
+            return match.iloc[0].to_dict()
+        return None
+    
+    def set_issue(self, sha: str, value: str):
+        self._ensure_row(sha)
+        self._df.loc[self._df["sha"] == sha, "issue"] = value
+
+    def set_release(self, sha: str, value: str):
+        self._ensure_row(sha)
+        self._df.loc[self._df["sha"] == sha, "release"] = value
 
     def save(self) -> None:
-        atomic_save_excel(self.df, self.excel_path)
+        atomic_save_excel(self._df, self.excel_path)
 
 
 class DataFrameCommitMetadataStore(CommitMetadataStore):
@@ -63,6 +77,12 @@ class DataFrameCommitMetadataStore(CommitMetadataStore):
             self.df = pd.read_csv(self.path)
         else:
             self.df = pd.DataFrame(columns=["sha", "issue", "release"])
+
+    def get_row(self, sha: str) -> dict | None:
+        match = self.df[self.df["sha"] == sha]
+        if not match.empty:
+            return match.iloc[0].to_dict()
+        return None
 
     def set_issue(self, sha: str, issue: str) -> None:
         row_idx = get_row_index_by_sha(self.df, sha)
