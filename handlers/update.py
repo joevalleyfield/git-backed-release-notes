@@ -31,7 +31,11 @@ class UpdateCommitHandler(RequestHandler):
         - 500 if no spreadsheet is loaded
         - 404 if the SHA is not found in the spreadsheet
         - 302 redirect back to the commit detail page on success
+        - 204 on successful update via AJAX request (no redirect)
         """
+
+        # handlers/update.py (inside post)
+        is_ajax = self.request.headers.get("X-Requested-With") == "fetch" or self.get_argument("ajax", None)
 
         store = self.application.settings.get("commit_metadata_store")
         if store is None:
@@ -50,6 +54,10 @@ class UpdateCommitHandler(RequestHandler):
 
         except KeyError as e:
             raise HTTPError(404, str(e)) from e
+
+        if is_ajax:
+            self.set_status(204)
+            return
 
         next_url = self.get_argument("next", default=None)
         if next_url:

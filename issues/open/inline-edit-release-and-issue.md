@@ -11,14 +11,19 @@ Allow users to edit the `release` and `issue` fields directly from the commit in
 
 ## Behavior
 
-- [x] Release and issue fields should appear editable (e.g., `contenteditable`, `<input>`, or `<textarea>`)
+- [x] Fields appear editable (via `<input>` elements)
 - [x] Changes may be submitted:
-  - On blur
   - [x] On pressing Enter
-  - Via explicit save/cancel buttons (optional)
-- Optimistic UI updates are allowed
-- [ ] Rows with unsaved or recently saved changes may be visually indicated
-- [ ] Keyboard focus should be preserved after editing if possible
+  - [x] On blur
+  ~- [ ] Via explicit Save/Cancel buttons (optional)~
+- [x] Submissions update the metadata store, creating rows if necessary
+- [x] Feature-tested for spreadsheet and non-spreadsheet modes
+- [x] Supports `next` parameter to enable redirect after update
+- [x] Optimistic UI updates (value updates immediately before round-trip)
+- [x] Visually indicate:
+  - [x] Unsaved changes
+  - [x] Recently saved changes (for 1 sec)
+- [x] Restore focus to edited field after save (if possible)
 
 ## Rationale
 

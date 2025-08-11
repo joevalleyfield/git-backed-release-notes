@@ -19,3 +19,20 @@ Feature: Edit commit metadata from index
     When I GET the root page
     Then the response should contain a form field "issue" for commit "middle"
     And the response should contain a form field "release" for commit "middle"
+
+  @javascript
+  Scenario: User edits the issue field and clicks away
+    Given a known commit "middle"
+    When the user edits the issue field to "foo-bar" and clicks away
+    Then the issue value should be "foo-bar"
+
+  @javascript
+  Scenario: User edits the release field and clicks away
+    Given a known commit "middle"
+    When the user edits the release field to "rel-5.3" and clicks away
+    Then the release value should be "rel-5.3"
+
+  Scenario: AJAX-style update returns 204 without redirect
+    Given a known commit "middle"
+    When I POST an AJAX metadata update for field "issue" with value "from-non-js"
+    Then the response status should be 204

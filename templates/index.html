@@ -65,5 +65,81 @@
       </div>
     </section>
   </main>
+  <script>
+    (() => {
+      const inputs = document.querySelectorAll('input[name="issue"], input[name="release"]');
+      const submitCooldownMs = 400;
+
+      // Prevent native form submissions for our commit forms (JS mode)
+      document.querySelectorAll('form[id^="form-"]').forEach(form => {
+        form.addEventListener('submit', (e) => e.preventDefault(), { capture: true });
+      });
+
+      function postForm(form, overrideName, overrideValue) {
+        const url = form.action.split('?')[0];     // <-- drop query
+        const fd = new FormData(form);
+        if (overrideName) fd.set(overrideName, overrideValue);
+        return fetch(url, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'fetch' } });
+      }
+
+      inputs.forEach(input => {
+        input.dataset.initial = input.value;
+
+        input.addEventListener('input', () => {
+          const changed = input.value !== input.dataset.initial;
+          input.dataset.dirty = changed ? '1' : '';
+          const row = input.closest('tr');
+          row?.classList.toggle('table-warning', changed);
+        });
+
+        // Enter submits via fetch, not native submit
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') {
+            ev.preventDefault();
+            ev.stopPropagation();
+            input.blur(); // reuse blur logic
+          }
+        });
+
+        input.addEventListener('blur', async () => {
+          if (!input.dataset.dirty) return;
+          const form = input.form;
+          if (!form) return;
+
+          const now = Date.now();
+          if (form._lastSubmitAt && now - form._lastSubmitAt < submitCooldownMs) return;
+          form._lastSubmitAt = now;
+
+          const row = input.closest('tr');
+          row?.classList.remove('table-success'); // reset any prior flash
+
+          // Preserve focus target
+          const caretPos = input.selectionStart;
+          const name = input.name;
+          const value = input.value;
+
+          try {
+            const resp = await postForm(form, name, value);
+            if (!resp.ok && resp.status !== 204) throw new Error(`Save failed: ${resp.status}`);
+
+            // Success: commit optimistic state
+            input.dataset.initial = input.value;
+            input.dataset.dirty = '';
+            row?.classList.remove('table-warning');
+            row?.classList.add('table-success');
+            setTimeout(() => row?.classList.remove('table-success'), 1500);
+
+            // Restore focus where user was (no page reload)
+            input.focus();
+            try { input.setSelectionRange(caretPos, caretPos); } catch (_) {}
+          } catch (e) {
+            // Failure: mark error style (Bootstrap danger)
+            row?.classList.add('table-danger');
+            console.error(e);
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

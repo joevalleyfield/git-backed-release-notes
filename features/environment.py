@@ -16,6 +16,7 @@ from types import SimpleNamespace
 from behave import fixture, use_fixture
 
 import pandas as pd
+from playwright.sync_api import sync_playwright
 
 from features.support.git_helpers import init_repo, create_commit, tag_commit
 from features.support.issue_helpers import link_commit_to_issue
@@ -212,6 +213,15 @@ def composite_fixture(context, **_kwargs):
     use_fixture(server_farm, context)
 
 
+@fixture
+def playwright_browser(context, *args, **kwargs):
+    context.playwright = sync_playwright().start()
+    context.browser = context.playwright.chromium.launch(headless=True)
+    context.page = context.browser.new_page()
+    yield context.page
+    context.browser.close()
+    context.playwright.stop()
+
 # --- BEHAVE HOOKS ---
 
 
@@ -219,6 +229,10 @@ def before_all(context):
     """Apply the composite fixture at the start of the test suite."""
 
     use_fixture(composite_fixture, context)
+
+def before_tag(context, tag):
+    if tag == "javascript":
+        use_fixture(playwright_browser, context)
 
 
 def before_scenario(context, scenario):

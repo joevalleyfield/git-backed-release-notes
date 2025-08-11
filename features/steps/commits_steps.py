@@ -16,11 +16,40 @@ from utils.git import get_commit_parents_and_children
 def step_known_commit_with_issue(context, commit_label, issue_slug):
     context.commit_sha = context.fixture_repo.sha_map[commit_label]
 
+def _resolve_sha_from_alias(context, alias: str) -> str:
+    fr = context.fixture_repo
 
-@given('a known commit "{commit_label}"')
-def step_known_commit_sha(context, commit_label):
-    context.commit_sha = context.fixture_repo.sha_map[commit_label]
+    # 1) Primary: explicit map provided by your fixture
+    if hasattr(fr, "sha_map") and alias in fr.sha_map:
+        return fr.sha_map[alias]
 
+    # 2) Common names
+    if alias in ("first", "initial"):
+        return fr.shas[0]
+    if alias in ("middle",):
+        return fr.shas[len(fr.shas)//2] if len(fr.shas) > 2 else fr.shas[0]
+    if alias in ("latest", "last"):
+        return fr.shas[-1]
+
+    # 3) Numeric index
+    if alias.isdigit():
+        return fr.shas[int(alias)]
+
+    # 4) Short SHA prefix
+    if all(c in "0123456789abcdef" for c in alias.lower()):
+        for s in fr.shas:
+            if s.startswith(alias):
+                return s
+
+    raise ValueError(f"Unknown commit alias: {alias}")
+
+@given('a known commit "{alias}"')
+def step_known_commit(context, alias):
+    if not hasattr(context, "commit_aliases"):
+        context.commit_aliases = {}
+    sha = _resolve_sha_from_alias(context, alias)
+    context.commit_aliases[alias] = sha
+    context.commit_sha = sha
 
 
 @when("I GET the detail page for that commit")
