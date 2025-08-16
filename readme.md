@@ -14,6 +14,10 @@ This is a minimal Tornado-based web viewer for navigating and annotating the com
   * Edit fields for `issue` and `release`, saved back to the spreadsheet
 * Fully styled interface with Bootstrap 5 and semantic HTML
 * Edits persist immediately using atomic overwrite
+* Inline editing model:  
+  * Enter or blur saves immediately  
+  * Escape cancels while still editing  
+  * No Save/Cancel buttons (low-friction, spreadsheet-like experience)  
 * Graph-aware tag navigation using `git describe` and `rev-list`
 * Optional tag filtering via glob pattern (e.g., `rel-*`)
 * Accepts CLI paths to both Git repository and spreadsheet
