@@ -104,7 +104,7 @@ class CommitHandler(RequestHandler):
                 match = re.match(r"diff --git a/(.*?) b/", line)
                 if match:
                     paths.append(match.group(1))
-            
+
         primary_issue, slugs = extract_issue_slugs(header)
         existing_issues = []
 

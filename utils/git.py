@@ -5,6 +5,7 @@ Includes:
 - extract_commits_from_git: fallback data source when no spreadsheet is provided.
 - get_commit_parents_and_children: Return the parent and child SHAs for a given commit.
 """
+
 import fnmatch
 from functools import lru_cache
 import logging
@@ -49,8 +50,8 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
     )
 
     logger.debug("raw git log output (escaped): %r", result.stdout)
-
     tokens = result.stdout.strip("\0").split("\0")
+
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug("split into %d tokens", len(tokens))
         for i, token in enumerate(tokens):
@@ -77,22 +78,28 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
                 paths.append(path)
             i += 1
 
-        logger.debug("commit #%d: sha=%s, message=%r, files=%r", idx, sha, message, paths)
-        rows.append({
-            "id": idx,
-            "sha": sha,
-            "author_date": author_date,
-            "message": message,
-            "release": "",
-            "touched_paths": paths,
-        })
+        logger.debug(
+            "commit #%d: sha=%s, message=%r, files=%r", idx, sha, message, paths
+        )
+        rows.append(
+            {
+                "id": idx,
+                "sha": sha,
+                "author_date": author_date,
+                "message": message,
+                "release": "",
+                "touched_paths": paths,
+            }
+        )
         idx += 1
 
     return rows
 
 
 @lru_cache(maxsize=None)
-def get_commit_parents_and_children(sha: str, repo_path: str) -> Tuple[List[str], List[str]]:
+def get_commit_parents_and_children(
+    sha: str, repo_path: str
+) -> Tuple[List[str], List[str]]:
     """
     Return the parent and child SHAs for a given commit.
 
@@ -127,6 +134,7 @@ def _get_children_map(repo_path: str) -> dict:
             children_map[parent] = children
     return children_map
 
+
 def get_tag_commit_sha(tag: str, repo_path: str) -> str:
     return run_git(
         repo_path,
@@ -138,7 +146,9 @@ def get_tag_commit_sha(tag: str, repo_path: str) -> str:
     ).stdout.strip
 
 
-def find_follows_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNamespace | None:
+def find_follows_tag(
+    sha: str, repo_path: str, tag_pattern: str
+) -> SimpleNamespace | None:
     """
     Finds the nearest matching tag that precedes the given commit (excluding its own tag).
 
@@ -178,7 +188,9 @@ def find_follows_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNamesp
         return None
 
 
-def find_precedes_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNamespace | None:
+def find_precedes_tag(
+    sha: str, repo_path: str, tag_pattern: str
+) -> SimpleNamespace | None:
     """
     Walks the commit graph forward from the given SHA to find the first descendant
     with a tag matching the given pattern.
@@ -233,9 +245,7 @@ def find_precedes_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNames
                     continue
 
                 tag = tag_shas[descendant_sha]
-                logger.debug(
-                    "Found descendant tag: %s at SHA: %s", tag, descendant_sha
-                )
+                logger.debug("Found descendant tag: %s at SHA: %s", tag, descendant_sha)
 
                 return SimpleNamespace(base_tag=tag, tag_sha=descendant_sha)
 
