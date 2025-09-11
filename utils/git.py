@@ -17,6 +17,20 @@ from typing import List, Tuple
 logger = logging.getLogger(__name__)
 
 
+def run_git(repo_path: str, *args: str, **kwargs) -> subprocess.CompletedProcess:
+    """
+    Centralized Git runner.
+
+    Returns CompletedProcess, just like subprocess.run.
+
+    Keeps cwd pinned to the repo.
+    """
+    cp = subprocess.run(
+        ["git", *args], cwd=repo_path, text=True, capture_output=True, **kwargs
+    )
+    return cp
+
+
 def extract_commits_from_git(repo_path: str) -> list[dict]:
     """
     Extract commit metadata directly from the Git repository.
@@ -24,17 +38,13 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
     Returns a list of dictionaries with keys:
     id, sha, release, message, author_date, and touched_paths.
     """
-    result = subprocess.run(
-        [
-            "git", "-C", repo_path, "log",
-            # "--reverse",
-            "-z",
-            "--name-only",
-            "--pretty=format:%H%x09%ad%x09%s%x00",
-            "--date=iso",
-        ],
-        capture_output=True,
-        text=True,
+    result = run_git(
+        repo_path,
+        "log",
+        "-z",
+        "--name-only",
+        "--pretty=format:%H%x09%ad%x09%s%x00",
+        "--date=iso",
         check=True,
     )
 
@@ -97,13 +107,7 @@ def get_commit_parents_and_children(sha: str, repo_path: str) -> Tuple[List[str]
 
 
 def _get_parents(sha: str, repo_path: str) -> List[str]:
-    result = subprocess.run(
-        ["git", "show", "-s", "--format=%P", sha],
-        capture_output=True,
-        text=True,
-        check=True,
-        cwd=repo_path,
-    )
+    result = run_git(repo_path, "show", "-s", "--format=%P", sha, check=True)
     return result.stdout.strip().split()
 
 
@@ -113,13 +117,7 @@ def _get_children_map(repo_path: str) -> dict:
     Build a mapping of commit SHA to its list of children.
     Only called once per repo_path (due to lru_cache).
     """
-    result = subprocess.run(
-        ["git", "rev-list", "--all", "--children"],
-        capture_output=True,
-        text=True,
-        check=True,
-        cwd=repo_path,
-    )
+    result = run_git(repo_path, "rev-list", "--all", "--children", check=True)
 
     children_map = {}
     for line in result.stdout.strip().splitlines():
@@ -130,11 +128,12 @@ def _get_children_map(repo_path: str) -> dict:
     return children_map
 
 def get_tag_commit_sha(tag: str, repo_path: str) -> str:
-    return subprocess.run(
-        ["git", "rev-list", "-n", "1", tag],
-        capture_output=True,
-        text=True,
-        cwd=repo_path,
+    return run_git(
+        repo_path,
+        "rev-list",
+        "-n",
+        "1",
+        tag,
         check=True,
     ).stdout.strip
 
@@ -244,20 +243,20 @@ def find_precedes_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNames
 
     except subprocess.SubprocessError as e:
         # Likely due to tag lookup or invalid rev-list index
-        logger.debug(
-            "Subprocess error during precedes resolution for %s: %s", sha, e
-        )
+        logger.debug("Subprocess error during precedes resolution for %s: %s", sha, e)
 
     return None
 
 
 def get_describe_name(repo_path: str, sha: str, match: str = "rel-*") -> str | None:
     try:
-        result = subprocess.run(
-            ["git", "describe", "--tags", "--match", match, sha],
-            capture_output=True,
-            text=True,
-            cwd=repo_path,
+        result = run_git(
+            repo_path,
+            "describe",
+            "--tags",
+            "--match",
+            match,
+            sha,
             check=True,
         )
         return result.stdout.strip()
@@ -269,17 +268,17 @@ def get_matching_tag_commits(repo_path: str, pattern: str) -> dict[str, str]:
     """
     Return a mapping of tag commit SHAs to tag names for tags matching the pattern.
     """
-    tag_lines = subprocess.run(
-        [
-            "git", "for-each-ref",
+    tag_lines = (
+        run_git(
+            repo_path,
+            "for-each-ref",
             "--format=%(refname:strip=2) %(objectname)",
             "refs/tags",
-        ],
-        capture_output=True,
-        text=True,
-        cwd=repo_path,
-        check=True,
-    ).stdout.strip().splitlines()
+            check=True,
+        )
+        .stdout.strip()
+        .splitlines()
+    )
 
     logger.debug("Collected %d total tags", len(tag_lines))
 
@@ -288,11 +287,12 @@ def get_matching_tag_commits(repo_path: str, pattern: str) -> dict[str, str]:
         parts = line.split()
         tag_name = parts[0]
         if fnmatch.fnmatch(tag_name, pattern):
-            tag_commit_sha = subprocess.run(
-                ["git", "rev-list", "-n", "1", tag_name],
-                capture_output=True,
-                text=True,
-                cwd=repo_path,
+            tag_commit_sha = run_git(
+                repo_path,
+                "rev-list",
+                "-n",
+                "1",
+                tag_name,
                 check=True,
             ).stdout.strip()
             tag_shas[tag_commit_sha] = tag_name
@@ -310,12 +310,13 @@ def get_topo_ordered_commits(repo_path: str) -> list[str]:
     """
     Return all commit SHAs in topological order (oldest to newest).
     """
-    result = subprocess.run(
-        ["git", "rev-list", "--topo-order", "--reverse", "--all"],
-        capture_output=True,
-        text=True,
+    result = run_git(
+        repo_path,
+        "rev-list",
+        "--topo-order",
+        "--reverse",
+        "--all",
         check=True,
-        cwd=repo_path,
     )
     return result.stdout.strip().splitlines()
 
@@ -324,11 +325,17 @@ def is_ancestor(ancestor_sha: str, descendant_sha: str, repo_path: str) -> bool:
     """
     Return True if ancestor_sha is an ancestor of descendant_sha.
     """
-    return subprocess.run(
-        ["git", "merge-base", "--is-ancestor", ancestor_sha, descendant_sha],
-        cwd=repo_path,
-        check=False,
-    ).returncode == 0
+    return (
+        run_git(
+            repo_path,
+            "merge-base",
+            "--is-ancestor",
+            ancestor_sha,
+            descendant_sha,
+            check=False,
+        ).returncode
+        == 0
+    )
 
 
 def parse_describe_output(raw: str) -> tuple[str, int] | None:

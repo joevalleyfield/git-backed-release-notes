@@ -13,7 +13,13 @@ import subprocess
 
 from tornado.web import RequestHandler
 
-from utils.git import get_commit_parents_and_children, find_follows_tag, find_precedes_tag, get_describe_name
+from utils.git import (
+    get_commit_parents_and_children,
+    find_follows_tag,
+    find_precedes_tag,
+    get_describe_name,
+    run_git,
+)
 from utils.commit_parsing import extract_issue_slugs
 
 
@@ -54,14 +60,7 @@ class CommitHandler(RequestHandler):
         - Nearest previous and next tags matching the filter pattern
         """
         try:
-            result = subprocess.run(
-                ["git", "show", sha],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                check=True,
-                cwd=self.repo_path,
-            )
+            result = run_git(self.repo_path, "show", sha, check=True)
             output = result.stdout
         except subprocess.CalledProcessError as e:
             logger.error("git show failed for %s: %s", sha, e.stderr)
