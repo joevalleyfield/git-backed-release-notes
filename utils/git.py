@@ -314,45 +314,48 @@ def get_describe_name(repo_path: str, sha: str, match: str = "rel-*") -> str | N
         return None
 
 
+@lru_cache(maxsize=1)
+def _get_all_tag_commits(repo_path: str) -> dict[str, str]:
+    """
+    Return mapping of tag names -> commit SHAs (peeled).
+    Cached once per repo_path.
+    """
+    result = run_git(
+        repo_path,
+        "for-each-ref",
+        "--format=%(refname:strip=2) %(objectname)",
+        "refs/tags",
+        check=True,
+    )
+    mapping: dict[str, str] = {}
+    for line in result.stdout.strip().splitlines():
+        if not line.strip():
+            continue
+        tag_name, obj = line.split()
+        # peel annotated tags if necessary
+        peel = run_git(
+            repo_path,
+            "rev-parse",
+            f"{tag_name}^{{}}",
+            check=False,
+        )
+        sha = peel.stdout.strip() if peel.returncode == 0 else obj
+        mapping[tag_name] = sha
+    return mapping
+
+
 def get_matching_tag_commits(repo_path: str, pattern: str) -> dict[str, str]:
     """
     Return a mapping of tag commit SHAs to tag names for tags matching the pattern.
     """
-    tag_lines = (
-        run_git(
-            repo_path,
-            "for-each-ref",
-            "--format=%(refname:strip=2) %(objectname)",
-            "refs/tags",
-            check=True,
-        )
-        .stdout.strip()
-        .splitlines()
-    )
-
-    logger.debug("Collected %d total tags", len(tag_lines))
-
-    tag_shas = {}
-    for line in tag_lines:
-        parts = line.split()
-        tag_name = parts[0]
+    all_tags = _get_all_tag_commits(repo_path)
+    tag_shas: dict[str, str] = {}
+    for tag_name, sha in all_tags.items():
         if fnmatch.fnmatch(tag_name, pattern):
-            tag_commit_sha = run_git(
-                repo_path,
-                "rev-list",
-                "-n",
-                "1",
-                tag_name,
-                check=True,
-            ).stdout.strip()
-            tag_shas[tag_commit_sha] = tag_name
-
+            tag_shas[sha] = tag_name
     logger.debug(
-        "Filtered %d matching tags for pattern '%s'",
-        len(tag_shas),
-        pattern,
+        "Filtered %d matching tags for pattern '%s'", len(tag_shas), pattern
     )
-
     return tag_shas
 
 
