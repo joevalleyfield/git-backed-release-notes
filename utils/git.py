@@ -359,6 +359,7 @@ def get_matching_tag_commits(repo_path: str, pattern: str) -> dict[str, str]:
     return tag_shas
 
 
+@lru_cache(maxsize=1)
 def get_topo_ordered_commits(repo_path: str) -> list[str]:
     """
     Return all commit SHAs in topological order (oldest to newest).
@@ -371,7 +372,9 @@ def get_topo_ordered_commits(repo_path: str) -> list[str]:
         "--all",
         check=True,
     )
-    return result.stdout.strip().splitlines()
+    commits = result.stdout.strip().splitlines()
+    logger.debug("Loaded %d commits into topo-order cache", len(commits))
+    return commits
 
 
 def is_ancestor(ancestor_sha: str, descendant_sha: str, repo_path: str) -> bool:
