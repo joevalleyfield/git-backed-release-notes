@@ -19,13 +19,11 @@ logger = logging.getLogger(__name__)
 class MainHandler(RequestHandler):
     """Serves the main page showing a table of commits loaded from the spreadsheet."""
 
-    df: pd.DataFrame
     repo_path: str
     store: CommitMetadataStore
 
     def initialize(self):
         """Inject the preloaded DataFrame of commit metadata into the handler."""
-        self.df = self.application.settings.get("df")
         self.repo_path = self.application.settings.get("repo_path")
         self.store = self.application.settings.get("commit_metadata_store")
 
@@ -39,16 +37,17 @@ class MainHandler(RequestHandler):
         Passes the full commit metadata DataFrame (as a list of dicts) to the template
         for rendering as an interactive HTML table.
         """
-        if self.df is not None:
-            rows = self.df.to_dict(orient="records")
+
+        metadata_df = self.store.get_metadata_df()
+
+        if self.store.limits_commit_set():
+            rows = metadata_df.to_dict(orient="records")
         else:
             git_rows = extract_commits_from_git(self.repo_path)
 
             logger.info("Extracted %d git commits", len(git_rows))
             for row in git_rows:
                 logger.info("GIT SHA: %s — %s", row["sha"], row["message"])
-
-            metadata_df = self.store.df.fillna("")  # from DataFrameCommitMetadataStore
 
             if not metadata_df.empty:
                 metadata = metadata_df.set_index("sha").to_dict(orient="index")

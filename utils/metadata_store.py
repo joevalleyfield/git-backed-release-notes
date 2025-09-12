@@ -14,6 +14,21 @@ logger.addHandler(logging.NullHandler())
 
 class CommitMetadataStore(ABC):
     """Abstract base class for reading and writing commit metadata (e.g. issue, release)."""
+    @abstractmethod
+    def get_metadata_df(self) -> pd.DataFrame:
+        """
+        Return the current metadata DataFrame with at least columns:
+        ['sha', 'issue', 'release'] (missing ones are okay; they’ll be treated as empty).
+        """
+        ...
+
+    @abstractmethod
+    def limits_commit_set(self) -> bool:
+        """
+        If True, this store’s spreadsheet/dataframe defines the exact set/order of SHAs
+        the UI should render. If False, show all commits from Git and just merge fields.
+        """
+        ...
 
     @abstractmethod
     def get_row(self, sha: str) -> dict | None:
@@ -56,11 +71,17 @@ class SpreadsheetCommitMetadataStore(CommitMetadataStore):
                 pd.DataFrame([{"sha": sha, "issue": "", "release": ""}])
             ], ignore_index=True)
 
+    def get_metadata_df(self) -> pd.DataFrame:
+        return self._df.fillna("")
+
     def get_row(self, sha: str) -> dict | None:
         match = self._df[self._df["sha"] == sha]
         if not match.empty:
             return match.iloc[0].to_dict()
         return None
+
+    def limits_commit_set(self) -> bool:
+        return True
     
     def reload(self) -> None:
         try:
@@ -98,11 +119,17 @@ class DataFrameCommitMetadataStore(CommitMetadataStore):
         else:
             self.df = pd.DataFrame(columns=["sha", "issue", "release"])
 
+    def get_metadata_df(self) -> pd.DataFrame:
+        return self.df.fillna("")
+
     def get_row(self, sha: str) -> dict | None:
         match = self.df[self.df["sha"] == sha]
         if not match.empty:
             return match.iloc[0].to_dict()
         return None
+
+    def limits_commit_set(self) -> bool:
+        return False
 
     def reload(self) -> None:
         if self.path.exists():
