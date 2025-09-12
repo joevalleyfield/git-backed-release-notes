@@ -60,7 +60,6 @@ def make_app(df, repo_path, tag_pattern, excel_path):
         template_path="templates",
         debug=True,
         tag_pattern=tag_pattern,
-        df=df,
         excel_path=excel_path,
         commit_metadata_store=store,
         issues_dir=repo_path / "issues",
