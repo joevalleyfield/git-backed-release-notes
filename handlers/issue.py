@@ -1,5 +1,7 @@
 import logging 
+import os
 from pathlib import Path
+import re
 from types import SimpleNamespace
 from urllib.parse import quote
 
@@ -83,6 +85,32 @@ class IssueDetailHandler(RequestHandler):
         )
 
 
+_NEWLINE_RE = re.compile(r'\r\n|\r|\n')
+
+
+def detect_dominant_eol(s: str) -> str | None:
+    """Return '\r\n', '\n', or '\r' if s contains newlines; pick the dominant one.
+    Return None if no newlines found."""
+    crlf = s.count('\r\n')
+    # Count lone CR and LF that aren't part of CRLF (simple but works well enough)
+    # Replace CRLF temporarily to avoid double-count
+    tmp = s.replace('\r\n', '\0')
+    cr = tmp.count('\r')
+    lf = tmp.count('\n')
+    if crlf == cr == lf == 0:
+        return None
+    # Choose the most frequent; break ties preferring CRLF, then LF.
+    counts = [('\r\n', crlf), ('\n', lf), ('\r', cr)]
+    counts.sort(key=lambda x: x[1], reverse=True)
+    return counts[0][0]
+
+
+def normalize_to(s: str, target_eol: str) -> str:
+    # First normalize everything to LF, then to target
+    s_lf = _NEWLINE_RE.sub('\n', s)
+    return s_lf.replace('\n', target_eol)
+
+
 class IssueUpdateHandler(RequestHandler):
     def post(self, slug: str):
         issues_dir: Path = self.application.settings["issues_dir"]
@@ -94,5 +122,22 @@ class IssueUpdateHandler(RequestHandler):
             self.write("Issue not found.")
             return
 
-        path.write_text(markdown, encoding="utf-8")
+        # 1) Detect target EOL from existing file (if any)
+        target_eol = os.linesep  # platform-native default
+        if path.exists():
+            try:
+                existing = path.read_text(encoding="utf-8", errors="ignore")
+                eol = detect_dominant_eol(existing)
+                if eol:
+                    target_eol = eol
+            except Exception:
+                pass  # fall back to os.linesep
+
+        # 2) Normalize incoming content to target EOL
+        out = normalize_to(markdown, target_eol)
+
+        # 3) Write exactly as-is (no newline translation!)
+        #    newline='' disables universal newline conversion on write.
+        path.write_text(out, encoding="utf-8", newline="")
+
         self.redirect(f"/issue/{quote(slug)}")
