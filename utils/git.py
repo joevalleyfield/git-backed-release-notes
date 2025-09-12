@@ -6,13 +6,15 @@ Includes:
 - get_commit_parents_and_children: Return the parent and child SHAs for a given commit.
 """
 
+from collections import defaultdict
 import fnmatch
 from functools import lru_cache
 import logging
 import re
 import subprocess
+from time import perf_counter
 from types import SimpleNamespace
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 
 logger = logging.getLogger(__name__)
@@ -26,10 +28,48 @@ def run_git(repo_path: str, *args: str, **kwargs) -> subprocess.CompletedProcess
 
     Keeps cwd pinned to the repo.
     """
+    start = perf_counter()
     cp = subprocess.run(
         ["git", *args], cwd=repo_path, text=True, capture_output=True, **kwargs
     )
+
+    dt_ms = (perf_counter() - start) * 1000.0
+    _record_git_stat(args, dt_ms)
+    _maybe_log_slow(args, dt_ms)
     return cp
+
+
+_git_stats: Dict[Tuple[str, ...], Dict[str, float]] = defaultdict(lambda: {"count": 0, "total_ms": 0.0, "max_ms": 0.0})
+
+
+def _record_git_stat(args: Tuple[str, ...], dt_ms: float) -> None:
+    s = _git_stats[tuple(args)]
+    s["count"] += 1
+    s["total_ms"] += dt_ms
+    if dt_ms > s["max_ms"]:
+        s["max_ms"] = dt_ms
+
+
+def _maybe_log_slow(args: Tuple[str, ...], dt_ms: float, threshold_ms: float = 150.0) -> None:
+    # Adjust threshold_ms if needed, or read from settings/env later.
+    if dt_ms >= threshold_ms:
+        logger.warning("GIT SLOW (%.1f ms): git %s", dt_ms, " ".join(args))
+
+
+def get_git_stats(sort_by: str = "total_ms") -> list[tuple[Tuple[str, ...], Dict[str, float]]]:
+    """
+    Returns a sorted list of (args_tuple, stats_dict) where stats_dict has count/total_ms/max_ms.
+    sort_by ∈ {'total_ms','count','max_ms'}
+    """
+    key = {"total_ms": lambda kv: kv[1]["total_ms"],
+           "count":    lambda kv: kv[1]["count"],
+           "max_ms":   lambda kv: kv[1]["max_ms"]}[sort_by]
+
+    return sorted(_git_stats.items(), key=key, reverse=True)
+
+
+def reset_git_stats() -> None:
+    _git_stats.clear()
 
 
 def extract_commits_from_git(repo_path: str) -> list[dict]:
