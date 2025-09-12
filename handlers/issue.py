@@ -46,14 +46,13 @@ class IssueDetailHandler(RequestHandler):
         commit_metadata_store = self.application.settings.get("commit_metadata_store")
         linked_commits = []
 
-        if hasattr(commit_metadata_store, "df"):
-            try:
-                commit_metadata_store.df = pd.read_csv(commit_metadata_store.path)
-            except Exception as e:
-                logger.warning("Failed to reload commit metadata store: %s", e)
-            df = commit_metadata_store.df
-            matches = df[df["issue"] == slug]
-            sha_list = matches["sha"].tolist()
+        # Refresh store (no-op for in-memory stores), then ask it for SHAs
+        try:
+            commit_metadata_store.reload()
+        except Exception as e:
+            logger.warning("Failed to reload commit metadata store: %s", e)
+        sha_list = commit_metadata_store.shas_for_issue(slug)
+
 
         # Scan all commits and filter only those matching spreadsheet-linked SHAs
         scanned_commits = [
