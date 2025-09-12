@@ -27,6 +27,15 @@ class CommitMetadataStore(ABC):
     def set_release(self, sha: str, release: str) -> None:
         ...
 
+    @abstractmethod
+    def shas_for_issue(self, issue: str) -> list[str]:
+        """Return all commit SHAs linked to the given issue slug."""
+        ...
+
+    def reload(self) -> None:
+        """Optional no-op: stores may override to refresh from their backing file."""
+        pass
+
     def save(self) -> None:
         """Optional no-op for stores that persist immediately."""
         pass
@@ -53,6 +62,13 @@ class SpreadsheetCommitMetadataStore(CommitMetadataStore):
             return match.iloc[0].to_dict()
         return None
     
+    def reload(self) -> None:
+        try:
+            # Assumes the sheet written by `atomic_save_excel` has the expected columns
+            self._df = pd.read_excel(self.excel_path)
+        except Exception as e:
+            logger.warning("SpreadsheetCommitMetadataStore reload failed: %s", e)
+
     def set_issue(self, sha: str, value: str):
         self._ensure_row(sha)
         self._df.loc[self._df["sha"] == sha, "issue"] = value
@@ -63,6 +79,10 @@ class SpreadsheetCommitMetadataStore(CommitMetadataStore):
 
     def save(self) -> None:
         atomic_save_excel(self._df, self.excel_path)
+
+    def shas_for_issue(self, issue: str) -> list[str]:
+        matches = self._df[self._df["issue"] == issue]
+        return matches["sha"].tolist()
 
 
 class DataFrameCommitMetadataStore(CommitMetadataStore):
@@ -84,6 +104,13 @@ class DataFrameCommitMetadataStore(CommitMetadataStore):
             return match.iloc[0].to_dict()
         return None
 
+    def reload(self) -> None:
+        if self.path.exists():
+            try:
+                self.df = pd.read_csv(self.path)
+            except Exception as e:
+                logger.warning("DataFrameCommitMetadataStore reload failed: %s", e)
+
     def set_issue(self, sha: str, issue: str) -> None:
         row_idx = get_row_index_by_sha(self.df, sha)
         if row_idx is None:
@@ -100,3 +127,7 @@ class DataFrameCommitMetadataStore(CommitMetadataStore):
 
     def save(self) -> None:
         self.df.to_csv(self.path, index=False)
+
+    def shas_for_issue(self, issue: str) -> list[str]:
+        matches = self.df[self.df["issue"] == issue]
+        return matches["sha"].tolist()
