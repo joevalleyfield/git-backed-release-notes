@@ -101,7 +101,7 @@
           }
         });
 
-        input.addEventListener('blur', async () => {
+        async function saveInputChange(input, {restoreCursorOnSave = false} = {}) {
           if (!input.dataset.dirty) return;
           const form = input.form;
           if (!form) return;
@@ -129,13 +129,26 @@
             row?.classList.add('table-success');
             setTimeout(() => row?.classList.remove('table-success'), 1500);
 
-            // Restore focus where user was (no page reload)
-            input.focus();
-            try { input.setSelectionRange(caretPos, caretPos); } catch (_) {}
+            if (restoreCursorOnSave) {
+              input.focus();
+              try { input.setSelectionRange(caretPos, caretPos); } catch (_) {}
+            }
+
           } catch (e) {
             // Failure: mark error style (Bootstrap danger)
             row?.classList.add('table-danger');
             console.error(e);
+          }
+        }
+
+        input.addEventListener('blur', () => saveInputChange(input));
+
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') {
+            ev.preventDefault();
+            ev.stopPropagation();
+            input.blur();
+            saveInputChange(input, { restoreCursorOnSave: true });
           }
         });
       });

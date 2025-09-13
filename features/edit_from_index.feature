@@ -24,13 +24,25 @@ Feature: Edit commit metadata from index
   Scenario: User edits the issue field and clicks away
     Given a known commit "middle"
     When the user edits the issue field to "foo-bar" and clicks away
+    And the focus should be on the expected element after the save
+    When I reload the page
     Then the issue value should be "foo-bar"
 
   @javascript
   Scenario: User edits the release field and clicks away
     Given a known commit "middle"
     When the user edits the release field to "rel-5.3" and clicks away
+    And the focus should be on the expected element after the save
+    When I reload the page
     Then the release value should be "rel-5.3"
+
+  @javascript
+  Scenario: User edits the release field and tabs away
+    Given a known commit "middle"
+    When the user edits the release field to "rel-5.4" and tabs away
+    And the focus should be on the expected element after the save
+    When I reload the page
+    Then the release value should be "rel-5.4"
 
   Scenario: AJAX-style update returns 204 without redirect
     Given a known commit "middle"
