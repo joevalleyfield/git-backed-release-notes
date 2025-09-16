@@ -51,6 +51,8 @@
           {% end %}
         </nav>
       {% end %}
+      
+      <a id="back-link" class="btn btn-outline-secondary" href="/#sha-{{ sha[:7] }}">← Back to index</a>
     </header>
 
     <section class="mb-4" aria-labelledby="commit-form-title">
@@ -84,18 +86,51 @@
 
     <section class="mb-4" aria-labelledby="commit-diff-title">
       <h2 id="commit-diff-title" class="visually-hidden">Diff</h2>
+
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-bold">Diff</span>
+        <button id="copy-diff-btn" class="btn btn-sm btn-outline-secondary" type="button">
+          Copy
+        </button>
+      </div>
+
       <div id="diff" class="border rounded">
         <pre class="bg-light p-3 m-0">{{ output_diff }}</pre>
       </div>
+
       <script>
         const container = document.getElementById("diff");
         const rawText = container.textContent;
+
+        // Pretty diff
         const ui = new Diff2HtmlUI(container, rawText, {
           drawFileList: true,
           outputFormat: "line-by-line",
           matching: "lines",
         });
         ui.draw();
+
+        // Clipboard button behavior
+        const copyBtn = document.getElementById("copy-diff-btn");
+
+        copyBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(rawText);
+
+            const original = copyBtn.textContent;
+            copyBtn.innerHTML = "&#10003; Copied!"; // ✓ Copied!
+
+            setTimeout(() => {
+              copyBtn.textContent = original;
+            }, 2000);
+          } catch (err) {
+            console.error("Copy failed", err);
+            copyBtn.textContent = "Error";
+            setTimeout(() => {
+              copyBtn.textContent = "Copy";
+            }, 2000);
+          }
+        });
       </script>
     </section>
 
