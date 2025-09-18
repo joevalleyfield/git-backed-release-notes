@@ -10,6 +10,97 @@
       outline: 3px solid #0d6efd;
       outline-offset: -2px;
     }
+
+    /* Responsive commit table */
+    @media (max-width: 60rem) {
+      .commit-table thead {
+        display: none;
+      }
+      .commit-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+      }
+      .commit-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.125rem 0.25rem;
+        font-size: 0.875rem;
+      }
+      .commit-table td input::placeholder {
+        color: #aaa;
+      }
+    }
+
+    @media (min-width: 60rem) {
+
+    .commit-table {
+      table-layout: fixed;
+      width: 100%;
+    }
+    .commit-table th,
+    .commit-table td {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    /* SHA column: always short */
+    .commit-table th.col-sha,
+    .commit-table td[data-label="sha"] {
+      width: 9ch;   /* fits a 7-char hash */
+    }
+
+    /* Issue + Release: small fixed slots */
+    .commit-table th.col-issue,
+    .commit-table td[data-label="issue"] {
+      width: 20rem;
+      max-width: 20rem;
+    }
+
+    .commit-table th.col-release,
+    .commit-table td[data-label="release"] {
+      width: 8rem;
+      max-width: 8rem;
+    }
+
+    /* Date column: room for YYYY-MM-DD or YYYY-MM-DD HH:MM */
+    .commit-table th.col-date,
+    .commit-table td[data-label="date"] {
+      width: 16rem;
+      max-width: 16rem;
+    }
+
+    /* Message: expand to fill remainder */
+    .commit-table td[data-label="message"] {
+      width: auto;
+    }
+
+    .commit-message {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .commit-message.expanded {
+      white-space: normal;
+      overflow: visible;
+    }
+
+    .commit-table td[data-label="issue"] input,
+    .commit-table td[data-label="release"] input {
+      width: calc(100% - 2em);
+      box-sizing: border-box;
+    }
+
+    }
+
+
   </style>
 </head>
 <body>
@@ -20,40 +111,42 @@
 
     <section aria-labelledby="commit-table-heading">
       <h2 id="commit-table-heading" class="visually-hidden">Commit List</h2>
-      <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle">
+        <table class="table table-striped table-hover align-middle commit-table">
           <thead class="table-light">
             <tr>
-              <th>sha</th>
-              <th>message</th>
-              <th>issue</th>
-              <th>release</th>
-              <th>date</th>
+              <th class="col-sha">sha</th>
+              <th class="col-message">message</th>
+              <th class="col-issue">issue</th>
+              <th class="col-release">release</th>
+              <th class="col-date">date</th>
             </tr>
           </thead>
           <tbody>
             {% for row in rows %}
             <tr id="sha-{{ row['sha'][:7] }}">
+              <td data-label="sha"><a href="/commit/{{ row['sha'] }}">{{ row["sha"][:7] }}</a></td>
+              <td data-label="message">
+                <span class="commit-message">{{ row["message"] }}</span>
+              </td>
 
-              <td><a href="/commit/{{ row['sha'] }}">{{ row["sha"][:7] }}</a></td>
-              <td>{{ row["message"] }}</td>
 
-              <td>
-                <input name="issue" form="form-{{ row['sha'] }}" value="{{ row.get('issue', '') }}">
+              <td data-label="issue">
+                <input name="issue" form="form-{{ row['sha'] }}" value="{{ row.get('issue', '') }}" placeholder="(no issue)">
                 {% if row.get("issue") %}
                   <a href="/issue/{{ row['issue'] }}">🔗</a>
                 {% end %}
               </td>
 
-              <td>
-                <input name="release" form="form-{{ row['sha'] }}" value="{{ row.get('release', '') }}">
+              <td data-label="release">
+                <input name="release" form="form-{{ row['sha'] }}" value="{{ row.get('release', '') }}" placeholder="(no release)">
                 {% if row.get("release") %}
                   <a href="/release/{{ row['release'] }}">🔗</a>
                 {% end %}
               </td>
 
-              <td>{{ row["author_date"] }}</td>
+              <td data-label="date">{{ row["author_date"] }}</td>
             </tr>
+
             {% end %}
           </tbody>
         </table>
@@ -62,7 +155,6 @@
             <button type="submit" hidden>Submit</button>
           </form>
         {% end %}
-      </div>
     </section>
   </main>
   <script>
@@ -150,6 +242,12 @@
             input.blur();
             saveInputChange(input, { restoreCursorOnSave: true });
           }
+        });
+      });
+
+      document.querySelectorAll('.commit-message').forEach(el => {
+        el.addEventListener('click', () => {
+          el.classList.toggle('expanded');
         });
       });
     })();
