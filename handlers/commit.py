@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import subprocess
 
-from tornado.web import RequestHandler
+from tornado.web import HTTPError, RequestHandler
 
 from utils.git import (
     get_commit_parents_and_children,
@@ -153,3 +153,37 @@ class CommitHandler(RequestHandler):
             True if the tag matches the pattern; False otherwise.
         """
         return fnmatch.fnmatch(tag, self.application.settings["tag_pattern"])
+
+
+class CommitResolveHandler(RequestHandler):
+    """
+    Tornado request handler that resolves arbitrary Git revisions
+    (abbreviated SHA, branch name, tag, etc.) into a full commit SHA
+    and redirects to the canonical /commit/<full_sha> URL.
+    """
+    def get(self, rev_input: str):
+        """
+        Handle GET /commit/<rev>.
+
+        Resolves <rev> using `git rev-parse`, then redirects the client
+        to /commit/<full_sha>. If the revision cannot be resolved, a 404
+        is returned. Redirect is temporary (302) to avoid client-side
+        caching during development.
+        """
+
+
+        # Git refname rules:
+        # - Each pathname component (between slashes) is limited to 255 bytes.
+        # - Our regex ([^/]+) forbids slashes, so we’re only ever dealing with a single component.
+        # - Truncating to 255 ensures we never hand git an overlong ref and avoids DoS with huge inputs.
+        # - If we later allow slashes in the matcher, bump this limit (e.g. 512 or 1024) to cover
+        #   multiple path segments, but keep *some* cap in place for safety.
+        rev = rev_input[:255]
+
+        try:
+            result = run_git(self.application.settings["repo_path"], "rev-parse", rev)
+            full_sha = result.stdout.strip()
+        except subprocess.CalledProcessError:
+            raise HTTPError(404, f"Commit {short_sha} not found")
+
+        self.redirect(f"/commit/{full_sha}", permanent=True)
