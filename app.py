@@ -19,7 +19,7 @@ import pandas as pd
 from tornado.web import Application
 from tornado.ioloop import IOLoop
 
-from handlers.commit import CommitHandler
+from handlers.commit import CommitHandler, CommitResolveHandler
 from handlers.debug import GitStatsHandler
 from handlers.issue import IssueDetailHandler, IssueUpdateHandler
 from handlers.main import MainHandler
@@ -51,10 +51,11 @@ def make_app(df, repo_path, tag_pattern, excel_path):
     return Application(
         [
             (r"/", MainHandler),
-            (r"/commit/([a-f0-9]+)", CommitHandler),
-            (r"/issue/([^/]+)", IssueDetailHandler),
+            (r"/commit/([a-f0-9]{40})/update", UpdateCommitHandler),
+            (r"/commit/([a-f0-9]{40})", CommitHandler),
+            (r"/commit/([^/]+)", CommitResolveHandler),
             (r"/issue/([^/]+)/update", IssueUpdateHandler),
-            (r"/commit/([a-f0-9]+)/update", UpdateCommitHandler),
+            (r"/issue/([^/]+)", IssueDetailHandler),
             (r"/_debug/git-stats", GitStatsHandler),
         ],
         template_path="templates",
