@@ -1,4 +1,4 @@
-import logging 
+import logging
 import os
 from pathlib import Path
 import re
@@ -8,8 +8,8 @@ from urllib.parse import quote
 import pandas as pd
 from tornado.web import RequestHandler, HTTPError
 
-from utils.git import extract_commits_from_git
-from utils.issues import find_commits_referring_to_issue
+from ..utils.git import extract_commits_from_git
+from ..utils.issues import find_commits_referring_to_issue
 
 logger = logging.getLogger(__name__)
 # logger.addHandler(logging.NullHandler())  # safe default

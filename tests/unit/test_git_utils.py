@@ -1,13 +1,14 @@
 import subprocess
 from pathlib import Path
+
 import pytest
 
+from git_release_notes.utils.git import get_commit_parents_and_children
 from tests.helpers.git_fixtures import create_tag, test_repo
-from utils.git import get_commit_parents_and_children
 
 
 def test_get_describe_name_returns_expected_string(test_repo: Path):
-    from utils.git import get_describe_name
+    from git_release_notes.utils.git import get_describe_name
 
     shas = get_log_shas(test_repo)
     create_tag(test_repo, shas[0], "rel-0.1")

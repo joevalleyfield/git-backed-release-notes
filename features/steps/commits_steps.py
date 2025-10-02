@@ -7,7 +7,7 @@ from behave import given, when, then  # pylint: disable=no-name-in-module
 from hamcrest import assert_that, contains_string, equal_to, is_not, none, not_
 from bs4 import BeautifulSoup
 
-from utils.git import get_commit_parents_and_children
+from git_release_notes.utils.git import get_commit_parents_and_children
 
 # pylint: disable=missing-function-docstring
 

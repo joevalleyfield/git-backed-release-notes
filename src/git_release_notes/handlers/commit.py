@@ -13,14 +13,14 @@ import subprocess
 
 from tornado.web import HTTPError, RequestHandler
 
-from utils.git import (
-    get_commit_parents_and_children,
+from ..utils.commit_parsing import extract_issue_slugs
+from ..utils.git import (
     find_follows_tag,
     find_precedes_tag,
+    get_commit_parents_and_children,
     get_describe_name,
     run_git,
 )
-from utils.commit_parsing import extract_issue_slugs
 
 
 logger = logging.getLogger(__name__)

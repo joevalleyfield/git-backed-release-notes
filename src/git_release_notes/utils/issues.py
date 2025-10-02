@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from typing import Sequence
-from utils.commit_parsing import extract_issue_slugs
+
+from .commit_parsing import extract_issue_slugs
 
 def find_commits_referring_to_issue(slug: str, commits: Sequence[SimpleNamespace]) -> list[SimpleNamespace]:
     referring = []

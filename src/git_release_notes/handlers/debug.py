@@ -1,6 +1,6 @@
-from tornado.web import RequestHandler
-from utils.git import get_git_stats, reset_git_stats
 import json
+from tornado.web import RequestHandler
+from ..utils.git import get_git_stats, reset_git_stats
 
 class GitStatsHandler(RequestHandler):
     def get(self):

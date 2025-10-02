@@ -9,7 +9,7 @@ from pathlib import Path
 
 from tornado.web import HTTPError, RequestHandler
 
-from utils.data import atomic_save_excel, get_row_index_by_sha
+from ..utils.data import atomic_save_excel, get_row_index_by_sha
 
 
 logger = logging.getLogger(__name__)

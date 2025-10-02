@@ -12,18 +12,21 @@ project toward a modern Python package layout.
 
 ```
 .
-├── app.py
-├── handlers/
-├── utils/
-├── templates/
+├── app.py                # delegating shim
+├── src/git_release_notes/
+│   ├── __init__.py
+│   ├── __main__.py       # new CLI bootstrap
+│   ├── handlers/
+│   ├── templates/
+│   └── utils/
 ├── features/
 ├── tests/
 └── issues/
 ```
 
-- No `pyproject.toml` packaging metadata
-- Executable entry point lives in the top-level `app.py`
-- Library code is split across `handlers/` and `utils/` without package namespaces
+- No `pyproject.toml` packaging metadata yet
+- CLI entry point now lives in `git_release_notes/__main__.py` (invoked via shim)
+- Library code resides under the package namespace for bundler alignment
 
 ## Target Layout (canonical src layout)
 
@@ -43,13 +46,13 @@ project toward a modern Python package layout.
 
 ## Migration Plan
 
-1. Create `src/git_release_notes/` package skeleton with `__init__.py`
-2. Move reusable modules from `handlers/` and `utils/` under the new package
-3. Add `src/git_release_notes/__main__.py` that exposes the CLI entry point via `main()`
-4. Update `app.py` to import-and-delegate (or deprecate) while existing scripts migrate
-5. Introduce `pyproject.toml` defining the `git-release-notes` project and console entry
-6. Adjust imports, fixtures, and tests to the new package paths
-7. Update documentation and CI scripts to invoke `python -m git_release_notes`
+1. [x] Create `src/git_release_notes/` package skeleton with `__init__.py`
+2. [x] Move reusable modules from `handlers/` and `utils/` under the new package
+3. [x] Add `src/git_release_notes/__main__.py` that exposes the CLI entry point via `main()`
+4. [x] Update `app.py` to import-and-delegate (or deprecate) while existing scripts migrate
+5. [ ] Introduce `pyproject.toml` defining the `git-release-notes` project and console entry
+6. [x] Adjust imports, fixtures, and tests to the new package paths
+7. [ ] Update documentation and CI scripts to invoke `python -m git_release_notes`
 
 ## Definition of Done
 

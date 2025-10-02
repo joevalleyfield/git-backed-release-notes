@@ -13,13 +13,16 @@ Key behaviors tested:
 - Correct identification of a single primary issue (earliest directive match)
 - Handling of messages with no valid slugs or ambiguous formatting
 """
-import pytest
-from utils.commit_parsing import extract_issue_slugs
-
 
 import re
+
 import pytest
-from utils.commit_parsing import extract_issue_slugs, DIRECTIVE_RE, SLUG_RE
+
+from git_release_notes.utils.commit_parsing import (
+    DIRECTIVE_RE,
+    SLUG_RE,
+    extract_issue_slugs,
+)
 
 
 @pytest.mark.parametrize(
@@ -37,8 +40,6 @@ def test_extract_issue_slugs(message, expected_primary, expected_all):
     assert primary == expected_primary
     assert all_slugs == expected_all
 
-
-import pytest
 
 @pytest.mark.parametrize("text, expected_verb, expected_slug", [
     # ✅ Valid directive cases
@@ -65,8 +66,6 @@ def test_directive_re_primary_match(text, expected_verb, expected_slug):
         assert m.group("verb") == expected_verb
         assert m.group("slug") == expected_slug
 
-
-import re
 
 @pytest.mark.parametrize("text, expected", [
     ("Fixes #bare", ["bare"]),

@@ -1,5 +1,6 @@
 from pathlib import Path
-from handlers.issue import find_issue_file
+
+from git_release_notes.handlers.issue import find_issue_file
 
 def test_find_issue_file_finds_open(tmp_path):
     issues_dir = tmp_path / "issues"

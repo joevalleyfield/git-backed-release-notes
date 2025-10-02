@@ -8,10 +8,17 @@ from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import threading
 import time
 from types import SimpleNamespace
+
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT_DIR / "src"
+if SRC_DIR.exists():
+    sys.path.insert(0, str(SRC_DIR))
 
 from behave import fixture, use_fixture
 

@@ -1,5 +1,6 @@
 from types import SimpleNamespace
-from utils.issues import find_commits_referring_to_issue
+
+from git_release_notes.utils.issues import find_commits_referring_to_issue
 
 def make_row(**kwargs):
     return SimpleNamespace(

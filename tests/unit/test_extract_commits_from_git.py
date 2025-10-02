@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
-from utils.git import extract_commits_from_git
+
+from git_release_notes.utils.git import extract_commits_from_git
 
 
 def test_extract_commits_with_touched_paths(tmp_path):

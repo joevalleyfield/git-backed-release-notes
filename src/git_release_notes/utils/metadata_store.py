@@ -4,9 +4,10 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 import logging
+
 import pandas as pd
 
-from utils.data import atomic_save_excel, get_row_index_by_sha
+from .data import atomic_save_excel, get_row_index_by_sha
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
