@@ -26,15 +26,22 @@ This is a minimal Tornado-based web viewer for navigating and annotating the com
 ## 🚀 Usage
 
 ```bash
-python app.py --repo path/to/repo --excel-path path/to/commits.xlsx --tag-pattern "rel-*"
+python -m git_release_notes --repo path/to/repo \
+    --excel-path path/to/commits.xlsx --tag-pattern "rel-*"
 ```
 
-Then open [http://localhost:8888](http://localhost:8888) in your browser.
-
-You can also omit `--excel-path` to run in read-only mode with Git metadata only:
+After installation (e.g. `pip install .`), you can also use the console entry:
 
 ```bash
-python app.py --repo path/to/repo
+git-release-notes --repo path/to/repo
+```
+
+Then open [http://localhost:8000](http://localhost:8000) in your browser.
+
+You can omit `--excel-path` to run in read-only mode with Git metadata only:
+
+```bash
+python -m git_release_notes --repo path/to/repo
 ```
 
 ### Metadata and Issue Content
@@ -62,7 +69,7 @@ This tool includes optional debug logging to aid in understanding how `Precedes:
 To enable:
 
 ```bash
-python app.py commits.xlsx --repo path/to/repo --debug
+python -m git_release_notes --excel-path commits.xlsx --repo path/to/repo --debug
 ```
 
 Logged details include:
@@ -76,7 +83,7 @@ The logger is scoped to the application and avoids affecting global logging conf
 Logs go to stdout and can be redirected:
 
 ```bash
-python app.py ... --debug > debug.log 2>&1
+python -m git_release_notes ... --debug > debug.log 2>&1
 ```
 
 ## 📦 Dependencies
