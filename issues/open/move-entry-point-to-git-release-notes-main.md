@@ -50,7 +50,7 @@ project toward a modern Python package layout.
 2. [x] Move reusable modules from `handlers/` and `utils/` under the new package
 3. [x] Add `src/git_release_notes/__main__.py` that exposes the CLI entry point via `main()`
 4. [x] Update `app.py` to import-and-delegate (or deprecate) while existing scripts migrate
-5. [ ] Introduce `pyproject.toml` defining the `git-release-notes` project and console entry
+5. [x] Introduce `pyproject.toml` defining the `git-release-notes` project and console entry
 6. [x] Adjust imports, fixtures, and tests (pytest + Behave harness) to the new package paths and module invocation
 7. [ ] Update documentation and CI scripts to invoke `python -m git_release_notes`
 

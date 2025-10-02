@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "git-release-notes"
+version = "0.1.0"
+description = "Tornado-based web UI for browsing Git history with release note annotations."
+readme = "readme.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Git View Maintainers" },
+]
+keywords = ["git", "tornado", "release-notes", "web"]
+dependencies = [
+    "pandas>=2.0",
+    "openpyxl>=3.1",
+    "tornado>=6.3",
+]
+
+[project.optional-dependencies]
+test = [
+    "behave>=1.2",
+    "pytest>=8.0",
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    "playwright>=1.48",
+    "python-hamcrest>=2.1",
+]
+
+[project.scripts]
+"git-release-notes" = "git_release_notes.__main__:main"
+
+[project.urls]
+homepage = "https://github.com/joevalleyfield/git-view"
+repository = "https://github.com/joevalleyfield/git-view"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"git_release_notes" = ["templates/*.html"]
