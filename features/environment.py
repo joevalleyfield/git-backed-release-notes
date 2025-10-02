@@ -4,6 +4,7 @@ This module sets up a temporary Git repository and .xlsx input file,
 launches the Tornado app server before all tests, and tears everything down after.
 """
 
+import os
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
@@ -72,7 +73,7 @@ class ServerProcess:
             ServerProcess instance containing handles to the process and its logs.
         """
 
-        argv = ["python", "app.py"]
+        argv = [sys.executable, "-m", "git_release_notes"]
 
         if xlsx_path is not None:
             argv += ["--excel-path", str(xlsx_path)]
@@ -81,12 +82,21 @@ class ServerProcess:
         argv += ["--no-browser"]
         argv += ["--debug"]
 
+        env = os.environ.copy()
+        src_dir = ROOT_DIR / "src"
+        existing_pythonpath = env.get("PYTHONPATH", "")
+        path_parts = [str(src_dir)]
+        if existing_pythonpath:
+            path_parts.append(existing_pythonpath)
+        env["PYTHONPATH"] = os.pathsep.join(path_parts)
+
         proc = subprocess.Popen(
             argv,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             bufsize=1,  # line-buffered
+            env=env,
         )
         stdout = StringIO()
         stderr = StringIO()
