@@ -2,3 +2,6 @@ __pycache__
 dist/
 build/
 *.egg-info/
+
+# Codex/uv cache (kept local, not committed)
+.codex_cache/

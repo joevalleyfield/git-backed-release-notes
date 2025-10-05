@@ -1,0 +1,13 @@
+{
+  "setup": [
+    "mkdir -p .codex_cache/uv",
+    "UV_CACHE_DIR=$PWD/.codex_cache/uv uv pip install --system -r pyproject.toml[test]"
+  ],
+  "test": [
+    "pytest -q",
+    "behave --tags ~@wip"
+  ],
+  "cache": [
+    ".codex_cache/uv"
+  ]
+}
