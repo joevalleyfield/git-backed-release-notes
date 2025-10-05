@@ -5,3 +5,4 @@ build/
 
 # Codex/uv cache (kept local, not committed)
 .codex_cache/
+.scratch/
