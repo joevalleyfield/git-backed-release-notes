@@ -25,7 +25,7 @@ test = [
     "requests>=2.31",
     "beautifulsoup4>=4.12",
     "playwright>=1.48",
-    "python-hamcrest>=2.1",
+    "PyHamcrest>=2.1",
 ]
 
 [project.scripts]
