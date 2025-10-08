@@ -10,7 +10,8 @@ from bs4 import BeautifulSoup
 
 @when('I submit a new issue slug "{slug}" for that commit via the index form')
 def step_submit_issue_from_index(context, slug):
-    sha = context.fixture_repo.sha_map["middle"]
+    # Target the commit seeded with the "allow-editing" issue slug
+    sha = context.fixture_repo.issue_map["allow-editing"]
     context.commit_sha = sha
     context.response = requests.post(
         f"{context.server.base_url}/commit/{sha}/update",

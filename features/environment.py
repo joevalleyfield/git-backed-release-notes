@@ -191,12 +191,17 @@ def git_repo(context, **_kwargs):
     context.fixture_repo = SimpleNamespace(
         shas=[sha_a, sha_b, sha_c, sha_example],
         tag_to_sha={"rel-0.1": sha_a, "rel-0.2": sha_c},
-        sha_map = {
+        sha_map={
             "initial": sha_a,
             "middle": sha_b,
             "latest": sha_c,
             "example": sha_example,
-        }
+        },
+        issue_map={
+            # semantic mapping of commits to seeded issue slugs
+            "allow-editing": sha_a,
+            "display-issue-slugs-in-index": sha_b,
+        },
     )
 
     yield repo_path
