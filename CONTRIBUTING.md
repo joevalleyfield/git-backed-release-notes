@@ -12,6 +12,7 @@
 - Package the project: `python -m build` (requires `pip install build`).
 - Run unit tests: `pytest` from the repo root.
 - Execute end-to-end tests: `behave` (spawns Tornado servers on localhost ports 8888+; ensure ports are free).
+- Frontend libraries are vendored under `src/git_release_notes/static/vendor/`. Use `./scripts/setup_local_assets.sh` to download them (or `./scripts/refresh_vendor_assets.sh` to force an update) before running in offline environments. Set `USE_LOCAL_ASSETS=1` when you need to bypass the CDN entirely.
 
 ## Coding Style & Naming Conventions
 - Python code follows PEP 8 with 4-space indentation; keep modules ASCII-only unless a file already contains Unicode.

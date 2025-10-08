@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import time
 import webbrowser
 from pathlib import Path
@@ -27,11 +28,20 @@ PACKAGE_ROOT = Path(__file__).resolve().parent
 TEMPLATE_DIR = PACKAGE_ROOT / "templates"
 
 
+def _should_use_local_assets(env_value: str | None) -> bool:
+    if not env_value:
+        return False
+
+    return env_value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def make_app(
     df: pd.DataFrame | None,
     repo_path: Path,
     tag_pattern: str,
     excel_path: str | None,
+    *,
+    use_local_assets: bool | None = None,
 ) -> Application:
     """Create the Tornado application configured with handlers and settings."""
 
@@ -39,6 +49,12 @@ def make_app(
         store = SpreadsheetCommitMetadataStore(df, excel_path)
     else:
         store = DataFrameCommitMetadataStore(repo_path / "git-view.metadata.csv")
+
+    if use_local_assets is None:
+        use_local_assets = _should_use_local_assets(os.getenv("USE_LOCAL_ASSETS"))
+
+    static_dir = PACKAGE_ROOT / "static"
+    static_dir.mkdir(parents=True, exist_ok=True)
 
     return Application(
         [
@@ -52,11 +68,14 @@ def make_app(
         ],
         template_path=str(TEMPLATE_DIR),
         debug=True,
+        static_path=str(static_dir),
+        static_url_prefix="/static/",
         tag_pattern=tag_pattern,
         excel_path=excel_path,
         commit_metadata_store=store,
         issues_dir=repo_path / "issues",
         repo_path=repo_path,
+        use_local_assets=use_local_assets,
     )
 
 

@@ -2,6 +2,7 @@ __pycache__
 dist/
 build/
 *.egg-info/
+src/git_release_notes/static/vendor
 
 # Codex/uv cache (kept local, not committed)
 .codex_cache/
