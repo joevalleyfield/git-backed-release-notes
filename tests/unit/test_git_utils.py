@@ -5,6 +5,9 @@ from git_release_notes.utils.git import get_commit_parents_and_children
 from tests.helpers.git_fixtures import create_tag
 
 
+pytest_plugins = ["tests.helpers.git_fixtures"]
+
+
 def test_get_describe_name_returns_expected_string(test_repo: Path):
     from git_release_notes.utils.git import get_describe_name
 

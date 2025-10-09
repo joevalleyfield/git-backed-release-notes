@@ -15,12 +15,6 @@ import threading
 import time
 from types import SimpleNamespace
 
-
-ROOT_DIR = Path(__file__).resolve().parents[1]
-SRC_DIR = ROOT_DIR / "src"
-if SRC_DIR.exists():
-    sys.path.insert(0, str(SRC_DIR))
-
 from behave import fixture, use_fixture
 
 import pandas as pd
@@ -28,6 +22,12 @@ from playwright.sync_api import sync_playwright
 
 from features.support.git_helpers import init_repo, create_commit, tag_commit
 from features.support.issue_helpers import link_commit_to_issue
+
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT_DIR / "src"
+if SRC_DIR.exists() and str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 # --- DATA STRUCTURES ---
 

@@ -1,9 +1,7 @@
 """Steps for edit_from_index.feature."""
 
 import requests
-import pandas as pd
-
-from behave import given, when, then
+from behave import when, then
 from hamcrest import assert_that, contains_string, equal_to, is_not, none
 from bs4 import BeautifulSoup
 

@@ -82,7 +82,7 @@ def step_response_shows_precedes(context, precedes_tag):
 
 
 @then("the page should contain a describe name")
-def step_impl(context):
+def step_assert_describe_name_present(context):
     describe = context.response.text
     assert re.search(r"rel-\d+\.\d+(?:-\d+-g[0-9a-f]{7})?", describe)
 
@@ -97,25 +97,24 @@ def step_check_back_link_anchor(context):
 
 
 @then("the page should contain a metadata form with an issue field")
-def step_impl(context):
+def step_assert_issue_field_present(context):
     assert '<label for="issue"' in context.response.text
     assert 'name="issue"' in context.response.text
 
 
 @then("the page should contain a metadata form with a release field")
-def step_impl(context):
+def step_assert_release_field_present(context):
     assert '<label for="release"' in context.response.text
     assert 'name="release"' in context.response.text
 
 @then('the page should contain a link labeled "{label}"')
-def step_impl(context, label):
-    from bs4 import BeautifulSoup
+def step_assert_link_label_present(context, label):
     soup = BeautifulSoup(context.response.text, "html.parser")
     links = soup.find_all("a")
     assert any(label in link.text for link in links), f"Expected link labeled '{label}' not found."
 
 @then("the page should contain a link to the parent of that commit")
-def step_impl(context):
+def step_assert_parent_link_present(context):
     sha = context.commit_sha
     repo = context.repo_path
     parents, _ = get_commit_parents_and_children(sha, str(repo))

@@ -14,11 +14,11 @@ def step_server_running(context):
 
 
 @given("the server is running without a spreadsheet")
-def step_impl(context):
+def step_assert_no_spreadsheet_mode(context):
     assert_that(context.server.mode, matcher=equal_to("no_xlsx"))
 
 @given("the server is running in file-backed mode")
-def step_impl(context):
+def step_assert_file_backed_mode(context):
     assert_that(context.server.mode, matcher=equal_to("no_xlsx"))
 
 
