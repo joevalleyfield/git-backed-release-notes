@@ -28,5 +28,11 @@ jobs:
         with:
           install-deps: true
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+
       - name: Run ci-local script
         run: ./scripts/ci-local.sh
