@@ -7,8 +7,9 @@
 - Static assets such as CSV fixtures or metadata live alongside the app (`git-view.metadata.csv`, `commits.csv`).
 
 ## Build, Test, and Development Commands
+- Full check before a PR: `./scripts/ci-local.sh` provisions its own virtualenv, installs `[test]` extras with `uv` when available (falls back to `pip`), runs `ruff`, `pytest`, and a Behave smoke pass. Use `--skip-behave` while iterating.
 - Launch the UI: `python -m git_release_notes --repo /path/to/repo [--excel-path commits.xlsx]` (console alias: `git-release-notes`).
-- Install dev dependencies: `python -m pip install -e .[test]` to get runtime + test extras.
+- Install dev dependencies: `python -m pip install -e .[test]` (or `uv pip install -e .[test]`) to get runtime + test extras.
 - Package the project: `python -m build` (requires `pip install build`).
 - Run unit tests: `pytest` from the repo root.
 - Execute end-to-end tests: `behave` (spawns Tornado servers on localhost ports 8888+; ensure ports are free).

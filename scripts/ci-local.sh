@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    cat <<'USAGE'
+Usage: scripts/ci-local.sh [--skip-behave]
+
+Provision a throwaway virtual environment, install test extras, then run pytest and Behave.
+Options:
+  --skip-behave  Skip running Behave scenarios (useful while debugging pytest failures).
+USAGE
+}
+
+SKIP_BEHAVE=0
+while (($#)); do
+    case "$1" in
+        --skip-behave)
+            SKIP_BEHAVE=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            printf 'Unknown argument: %s\n\n' "$1" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+VENV_DIR="${REPO_ROOT}/.venv-ci-local"
+PYTHON_BIN="${VENV_DIR}/bin/python"
+
+if command -v uv >/dev/null 2>&1; then
+    UV_AVAILABLE=1
+else
+    UV_AVAILABLE=0
+fi
+
+if [ ! -d "${VENV_DIR}" ]; then
+    if [ "${UV_AVAILABLE}" -eq 1 ]; then
+        echo "[ci-local] Creating virtualenv with uv at ${VENV_DIR}"
+        uv venv "${VENV_DIR}"
+    else
+        echo "[ci-local] Creating virtualenv with python -m venv at ${VENV_DIR}"
+        python3 -m venv "${VENV_DIR}"
+    fi
+fi
+
+# shellcheck disable=SC1091
+source "${VENV_DIR}/bin/activate"
+
+if [ "${UV_AVAILABLE}" -eq 1 ]; then
+    echo "[ci-local] Installing project in editable mode via uv"
+    uv pip install --python "${PYTHON_BIN}" --upgrade pip setuptools wheel
+    uv pip install --python "${PYTHON_BIN}" -e ".[test]"
+else
+    echo "[ci-local] Installing project in editable mode via pip"
+    python -m pip install --upgrade pip setuptools wheel
+    pip install -e ".[test]"
+fi
+
+cd "${REPO_ROOT}"
+
+if python -m pip show ruff >/dev/null 2>&1; then
+    echo "[ci-local] Running ruff lint"
+    ruff check src tests
+elif python -m pip show flake8 >/dev/null 2>&1; then
+    echo "[ci-local] Running flake8 lint"
+    flake8 src tests
+else
+    echo "[ci-local] No lint tool detected (install ruff or flake8 to enable lint step)"
+fi
+
+echo "[ci-local] Running pytest"
+pytest --maxfail=1 --disable-warnings
+
+if [ "$SKIP_BEHAVE" -ne 1 ]; then
+    echo "[ci-local] Running Behave (skipping @javascript scenarios)"
+    behave --tags=-@javascript
+else
+    echo "[ci-local] Skipping Behave as requested"
+fi

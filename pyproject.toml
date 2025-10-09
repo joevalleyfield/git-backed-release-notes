@@ -26,6 +26,7 @@ test = [
     "beautifulsoup4>=4.12",
     "playwright>=1.48",
     "PyHamcrest>=2.1",
+    "ruff>=0.6",
 ]
 
 [project.scripts]
