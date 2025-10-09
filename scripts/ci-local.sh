@@ -3,19 +3,25 @@ set -euo pipefail
 
 usage() {
     cat <<'USAGE'
-Usage: scripts/ci-local.sh [--skip-behave]
+Usage: scripts/ci-local.sh [--skip-behave] [--skip-playwright-install]
 
 Provision a throwaway virtual environment, install test extras, then run pytest and Behave.
 Options:
   --skip-behave  Skip running Behave scenarios (useful while debugging pytest failures).
+  --skip-playwright-install  Assume Playwright browsers are already installed.
 USAGE
 }
 
 SKIP_BEHAVE=0
+SKIP_PLAYWRIGHT_INSTALL=0
 while (($#)); do
     case "$1" in
         --skip-behave)
             SKIP_BEHAVE=1
+            shift
+            ;;
+        --skip-playwright-install)
+            SKIP_PLAYWRIGHT_INSTALL=1
             shift
             ;;
         -h|--help)
@@ -80,8 +86,15 @@ echo "[ci-local] Running pytest"
 pytest --maxfail=1 --disable-warnings
 
 if [ "$SKIP_BEHAVE" -ne 1 ]; then
-    echo "[ci-local] Running Behave (skipping @javascript scenarios)"
-    behave --tags=-@javascript
+    if [ "$SKIP_PLAYWRIGHT_INSTALL" -ne 1 ]; then
+        echo "[ci-local] Ensuring Playwright browsers are installed"
+        python -m playwright install --with-deps chromium >/dev/null
+    else
+        echo "[ci-local] Skipping Playwright browser installation"
+    fi
+
+    echo "[ci-local] Running Behave (full suite)"
+    behave
 else
     echo "[ci-local] Skipping Behave as requested"
 fi

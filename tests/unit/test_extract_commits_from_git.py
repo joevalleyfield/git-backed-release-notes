@@ -7,6 +7,8 @@ def test_extract_commits_with_touched_paths(tmp_path):
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
 
     # Create and commit a file
     test_file = repo / "test.txt"
