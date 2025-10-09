@@ -5,7 +5,6 @@ import re
 from types import SimpleNamespace
 from urllib.parse import quote
 
-import pandas as pd
 from tornado.web import RequestHandler, HTTPError
 
 from ..utils.git import extract_commits_from_git
@@ -31,11 +30,6 @@ class IssueDetailHandler(RequestHandler):
         """
         repo_path: Path = self.application.settings["repo_path"]
         issues_dir: Path = self.application.settings["issues_dir"]
-
-        issue_paths = [
-            repo_path / "issues/open" / f"{slug}.md",
-            repo_path / "issues/closed" / f"{slug}.md",
-        ]
 
         path = find_issue_file(slug, issues_dir)
         if path is None:

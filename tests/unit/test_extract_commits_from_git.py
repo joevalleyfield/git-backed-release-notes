@@ -1,5 +1,4 @@
 import subprocess
-from pathlib import Path
 
 from git_release_notes.utils.git import extract_commits_from_git
 

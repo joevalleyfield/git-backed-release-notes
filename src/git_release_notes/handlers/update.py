@@ -5,11 +5,8 @@ Supports in-memory editing of 'issue' and 'release' fields and writes changes
 back to the spreadsheet using an atomic Excel save.
 """
 import logging
-from pathlib import Path
 
 from tornado.web import HTTPError, RequestHandler
-
-from ..utils.data import atomic_save_excel, get_row_index_by_sha
 
 
 logger = logging.getLogger(__name__)

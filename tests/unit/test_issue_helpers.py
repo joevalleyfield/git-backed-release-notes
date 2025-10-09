@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from git_release_notes.handlers.issue import find_issue_file
 
 def test_find_issue_file_finds_open(tmp_path):

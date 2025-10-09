@@ -65,8 +65,8 @@ class CommitHandler(RequestHandler):
         except subprocess.CalledProcessError as e:
             logger.error("git show failed for %s: %s", sha, e.stderr)
             output = None
-        except Exception as e:
-            logger.exception("Unexpected error while running git show")
+        except Exception:
+            logger.exception("Unexpected error while running git show for %s", sha)
             output = None
 
         if not output:
@@ -79,7 +79,6 @@ class CommitHandler(RequestHandler):
 
         parents, children = get_commit_parents_and_children(sha, self.repo_path)
 
-        df = self.application.settings.get("df")
         store = self.application.settings.get("commit_metadata_store")
 
         commit_row = store.get_row(sha)
@@ -184,6 +183,6 @@ class CommitResolveHandler(RequestHandler):
             result = run_git(self.application.settings["repo_path"], "rev-parse", rev)
             full_sha = result.stdout.strip()
         except subprocess.CalledProcessError:
-            raise HTTPError(404, f"Commit {short_sha} not found")
+            raise HTTPError(404, f"Revision {rev_input} not found")
 
         self.redirect(f"/commit/{full_sha}", permanent=True)

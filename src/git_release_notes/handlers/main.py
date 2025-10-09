@@ -7,7 +7,6 @@ and passes it to the template for interactive browsing.
 
 import logging
 
-import pandas as pd
 from tornado.web import RequestHandler
 
 from ..utils.git import extract_commits_from_git

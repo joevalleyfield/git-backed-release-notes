@@ -14,8 +14,6 @@ Key behaviors tested:
 - Handling of messages with no valid slugs or ambiguous formatting
 """
 
-import re
-
 import pytest
 
 from git_release_notes.utils.commit_parsing import (

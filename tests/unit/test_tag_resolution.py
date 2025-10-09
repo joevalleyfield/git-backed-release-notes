@@ -16,13 +16,12 @@ Key behaviors tested:
 - Edge cases: no tags, multiple tags, out-of-pattern tags
 - Symmetry between Follows and Precedes
 """
-import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from tests.helpers.git_fixtures import create_tag, get_log_shas, test_repo
+from tests.helpers.git_fixtures import create_tag, get_log_shas
 from git_release_notes.utils.git import find_follows_tag, find_precedes_tag
 
 

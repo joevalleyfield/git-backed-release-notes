@@ -1,10 +1,8 @@
 import subprocess
 from pathlib import Path
 
-import pytest
-
 from git_release_notes.utils.git import get_commit_parents_and_children
-from tests.helpers.git_fixtures import create_tag, test_repo
+from tests.helpers.git_fixtures import create_tag
 
 
 def test_get_describe_name_returns_expected_string(test_repo: Path):
@@ -39,7 +37,6 @@ def get_log_shas(repo: Path) -> list[str]:
 
 def test_commit_graph_extraction(test_repo: Path):
     shas = get_log_shas(test_repo)
-    print(shas)
     sha0, sha1, sha2 = shas
 
     # SHA1 is child of SHA0
