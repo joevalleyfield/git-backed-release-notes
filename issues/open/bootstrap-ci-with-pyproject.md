@@ -68,4 +68,4 @@
     ## Comments
     - 2025-10-09: Updated Phase B/E to reflect the current Python 3.11/3.12 matrix and confidence in running full Playwright-backed Behave coverage with caching.
     - 2025-10-09: Kicked off Phase C by generating uv-driven lockfiles, teaching CI to prefer them, and adding a `--locked` path to the local script for parity.
-    - 2025-10-09: Advanced Phase D by wiring cyclonedx SBOM generation + upload into CI and enabling Dependabot for Python locks and GitHub Actions.
+    - 2025-10-09: Advanced Phase D by wiring cyclonedx SBOM generation (+ dependency graph via the CI virtualenv) and enabling Dependabot for Python locks and GitHub Actions.
