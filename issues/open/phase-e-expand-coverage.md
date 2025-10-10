@@ -32,6 +32,12 @@
 - Behave lint job enforces tag taxonomy and reports coverage metrics.
 - Pre-commit hooks run clean for contributors and match the CI configuration.
 
+## Status
+- 2025-10-09: Ruff configured as required lint with import, bugbear, and comprehension rules enforced via CI/local script.
+- 2025-10-10: Black formatting adopted (with 110-char line length) and repository reformatted.
+- 2025-10-10: MyPy baseline added for `src/git_release_notes/utils` with passing checks.
+- 2025-10-10: Pre-commit hooks (ruff, black, mypy) introduced; CI runs `pre-commit run --all-files`.
+
 ## References
 - Root plan: `issues/open/bootstrap-ci-with-pyproject.md`
 - Current CI workflow: `.github/workflows/ci.yml`

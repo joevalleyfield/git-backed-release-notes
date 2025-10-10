@@ -1,34 +1,37 @@
 """Steps for enable_file_edit_no_xlsx.feature."""
 
 import requests
-
-from behave import given, when, then  # pylint: disable=no-name-in-module
+from behave import given, then, when  # pylint: disable=no-name-in-module
 from bs4 import BeautifulSoup
+from features.support.git_helpers import create_commit
+from features.support.issue_helpers import create_issue_file, link_commit_to_issue
 from hamcrest import assert_that, contains_string
 
-from features.support.issue_helpers import create_issue_file, link_commit_to_issue
-from features.support.git_helpers import create_commit
-
 # pylint: disable=missing-function-docstring
+
 
 @given('the commit is linked to issue "foo-bar"')
 def step_link_fixture_commit(context):
     sha = context.commit_sha
     link_commit_to_issue(context.repo_path, sha, "foo-bar")
 
+
 @given('the issues directory contains an open issue "{slug}"')
 def step_create_open_issue(context, slug):
     create_issue_file(context.repo_path, slug)
     context.issue_slug = slug
 
+
 @given('the Git repository contains a commit "{msg}"')
 def step_create_commit_with_message(context, msg):
     context.commit_sha = create_commit(context.repo_path, msg)
+
 
 @then('the issue file "{slug}.md" should contain "{text}"')
 def step_assert_issue_file_contains(context, slug, text):
     with open(context.repo_path / f"issues/open/{slug}.md", encoding="utf-8") as f:
         assert text in f.read()
+
 
 @when('the user visits the issue "{slug}" detail page')
 def step_visit_issue_detail(context, slug):
@@ -44,6 +47,7 @@ def step_visit_commit_detail(context, _):
     url = f"{context.server.base_url}/commit/{context.commit_sha}"
     context.response = requests.get(url, timeout=5)
 
+
 @then('the issue "{slug}" should show the commit "{message}"')
 def step_issue_page_shows_commit(context, slug, message):
     sha = context.commit_sha
@@ -52,6 +56,7 @@ def step_issue_page_shows_commit(context, slug, message):
     assert response.status_code == 200
     assert_that(response.text, contains_string(sha))
     assert_that(response.text, contains_string(message))
+
 
 @when('the user links the commit to issue "{slug}"')
 def step_link_commit_via_form(context, slug):
@@ -64,13 +69,14 @@ def step_link_commit_via_form(context, slug):
     assert context.response.status_code in (200, 302)
 
 
-@then('a metadata file should record the link between the commit and issue')
+@then("a metadata file should record the link between the commit and issue")
 def step_assert_metadata_file_updated(context):
     commit_sha: str = context.commit_sha
     metadata_path = context.repo_path / "git-view.metadata.csv"
     assert metadata_path.exists()
 
     import pandas as pd
+
     df = pd.read_csv(metadata_path)
     match = df[df["sha"] == commit_sha]
     assert not match.empty
@@ -97,7 +103,7 @@ def step_prepare_issue_edit(context, text):
     context.edited_issue_content = body
 
 
-@when('the user saves the issue')
+@when("the user saves the issue")
 def step_submit_issue_update(context):
     slug = context.edited_issue_slug
     body = context.edited_issue_content
@@ -109,15 +115,18 @@ def step_submit_issue_update(context):
         timeout=5,
     )
 
+
 @given('the issues directory contains a closed issue "{slug}"')
 def step_create_closed_issue(context, slug):
     create_issue_file(context.repo_path, slug, closed=True)
     context.issue_slug = slug
 
+
 @then('the closed issue file "{slug}.md" should contain "{text}"')
 def step_assert_closed_issue_file(context, slug, text):
     with open(context.repo_path / f"issues/closed/{slug}.md", encoding="utf-8") as f:
         assert text in f.read()
+
 
 @given('an uncommitted issue file named "{filename}" with contents:')
 def step_create_uncommitted_issue_file(context, filename):

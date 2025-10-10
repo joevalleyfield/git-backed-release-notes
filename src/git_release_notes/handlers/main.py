@@ -12,7 +12,6 @@ from tornado.web import RequestHandler
 from ..utils.git import extract_commits_from_git
 from ..utils.metadata_store import CommitMetadataStore
 
-
 logger = logging.getLogger(__name__)
 
 

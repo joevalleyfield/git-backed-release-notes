@@ -39,22 +39,25 @@ def test_extract_issue_slugs(message, expected_primary, expected_all):
     assert all_slugs == expected_all
 
 
-@pytest.mark.parametrize("text, expected_verb, expected_slug", [
-    # ✅ Valid directive cases
-    ("Fixes #foo", "Fixes", "foo"),
-    ("fixes bar.md", "fixes", "bar"),
-    ("Closes: #baz", "Closes", "baz"),
-    ("Implemented qux.md", "Implemented", "qux"),
-    ("Resolves foo-bar", "Resolves", "foo-bar"),
-    ("Fixes #foo-bar.md", "Fixes", "foo-bar"),
-    # ❌ Invalid or rejected cases
-    ("Fixes #Foo", None, None),            # uppercase
-    ("Fixes BARE.md", None, None),         # uppercase
-    ("Mentions foo", None, None),          # not a directive
-    ("#foo-bar.md is fixed", None, None),  # no directive
-    ("Fixes foo.HTML", None, None),        # invalid extension
-    ("Fixes #", None, None),               # empty slug
-])
+@pytest.mark.parametrize(
+    "text, expected_verb, expected_slug",
+    [
+        # ✅ Valid directive cases
+        ("Fixes #foo", "Fixes", "foo"),
+        ("fixes bar.md", "fixes", "bar"),
+        ("Closes: #baz", "Closes", "baz"),
+        ("Implemented qux.md", "Implemented", "qux"),
+        ("Resolves foo-bar", "Resolves", "foo-bar"),
+        ("Fixes #foo-bar.md", "Fixes", "foo-bar"),
+        # ❌ Invalid or rejected cases
+        ("Fixes #Foo", None, None),  # uppercase
+        ("Fixes BARE.md", None, None),  # uppercase
+        ("Mentions foo", None, None),  # not a directive
+        ("#foo-bar.md is fixed", None, None),  # no directive
+        ("Fixes foo.HTML", None, None),  # invalid extension
+        ("Fixes #", None, None),  # empty slug
+    ],
+)
 def test_directive_re_primary_match(text, expected_verb, expected_slug):
     m = DIRECTIVE_RE.search(text)
     if expected_verb is None:
@@ -65,15 +68,18 @@ def test_directive_re_primary_match(text, expected_verb, expected_slug):
         assert m.group("slug") == expected_slug
 
 
-@pytest.mark.parametrize("text, expected", [
-    ("Fixes #bare", ["bare"]),
-    ("Touches bare.md", ["bare"]),
-    ("Mentions #bare.md", ["bare"]),
-    ("Implements foo-bar", ["foo-bar"]),
-    ("Has a ball with foo-bar-baz and #spike", ["foo-bar-baz", "spike"]),
-    ("Touch nothing", []),
-    ("References to qux and #zap.md", ["zap"]),  # Only zap.md is valid
-])
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("Fixes #bare", ["bare"]),
+        ("Touches bare.md", ["bare"]),
+        ("Mentions #bare.md", ["bare"]),
+        ("Implements foo-bar", ["foo-bar"]),
+        ("Has a ball with foo-bar-baz and #spike", ["foo-bar-baz", "spike"]),
+        ("Touch nothing", []),
+        ("References to qux and #zap.md", ["zap"]),  # Only zap.md is valid
+    ],
+)
 def test_slug_re(text, expected):
     matches = []
     for m in SLUG_RE.finditer(text):

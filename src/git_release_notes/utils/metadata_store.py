@@ -1,9 +1,8 @@
 # utils/metadata_store.py
-# utils/metadata_store.py
 
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-import logging
 
 import pandas as pd
 
@@ -15,6 +14,7 @@ logger.addHandler(logging.NullHandler())
 
 class CommitMetadataStore(ABC):
     """Abstract base class for reading and writing commit metadata (e.g. issue, release)."""
+
     @abstractmethod
     def get_metadata_df(self) -> pd.DataFrame:
         """
@@ -32,16 +32,13 @@ class CommitMetadataStore(ABC):
         ...
 
     @abstractmethod
-    def get_row(self, sha: str) -> dict | None:
-        ...
+    def get_row(self, sha: str) -> dict | None: ...
 
     @abstractmethod
-    def set_issue(self, sha: str, issue: str) -> None:
-        ...
+    def set_issue(self, sha: str, issue: str) -> None: ...
 
     @abstractmethod
-    def set_release(self, sha: str, release: str) -> None:
-        ...
+    def set_release(self, sha: str, release: str) -> None: ...
 
     @abstractmethod
     def shas_for_issue(self, issue: str) -> list[str]:
@@ -50,11 +47,11 @@ class CommitMetadataStore(ABC):
 
     def reload(self) -> None:
         """Optional no-op: stores may override to refresh from their backing file."""
-        pass
+        return None
 
     def save(self) -> None:
         """Optional no-op for stores that persist immediately."""
-        pass
+        return None
 
 
 class SpreadsheetCommitMetadataStore(CommitMetadataStore):
@@ -67,10 +64,9 @@ class SpreadsheetCommitMetadataStore(CommitMetadataStore):
     def _ensure_row(self, sha: str):
         """Ensure that a row exists for the given SHA; insert one if missing."""
         if sha not in self._df["sha"].values:
-            self._df = pd.concat([
-                self._df,
-                pd.DataFrame([{"sha": sha, "issue": "", "release": ""}])
-            ], ignore_index=True)
+            self._df = pd.concat(
+                [self._df, pd.DataFrame([{"sha": sha, "issue": "", "release": ""}])], ignore_index=True
+            )
 
     def get_metadata_df(self) -> pd.DataFrame:
         return self._df.fillna("")
@@ -83,7 +79,7 @@ class SpreadsheetCommitMetadataStore(CommitMetadataStore):
 
     def limits_commit_set(self) -> bool:
         return True
-    
+
     def reload(self) -> None:
         try:
             # Assumes the sheet written by `atomic_save_excel` has the expected columns

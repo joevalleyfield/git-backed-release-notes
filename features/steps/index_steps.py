@@ -1,9 +1,9 @@
 """Steps for index.feature."""
 
 import requests
-from behave import given, when, then  # pylint: disable=no-name-in-module
-from hamcrest import assert_that, equal_to, is_not, none
+from behave import given, then, when  # pylint: disable=no-name-in-module
 from bs4 import BeautifulSoup
+from hamcrest import assert_that, equal_to, is_not, none
 
 # pylint: disable=missing-function-docstring
 
@@ -16,6 +16,7 @@ def step_server_running(context):
 @given("the server is running without a spreadsheet")
 def step_assert_no_spreadsheet_mode(context):
     assert_that(context.server.mode, matcher=equal_to("no_xlsx"))
+
 
 @given("the server is running in file-backed mode")
 def step_assert_file_backed_mode(context):

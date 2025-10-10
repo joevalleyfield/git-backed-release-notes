@@ -18,8 +18,10 @@ from .handlers.debug import GitStatsHandler
 from .handlers.issue import IssueDetailHandler, IssueUpdateHandler
 from .handlers.main import MainHandler
 from .handlers.update import UpdateCommitHandler
-from .utils.metadata_store import (DataFrameCommitMetadataStore,
-                                   SpreadsheetCommitMetadataStore)
+from .utils.metadata_store import (
+    DataFrameCommitMetadataStore,
+    SpreadsheetCommitMetadataStore,
+)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -101,9 +103,7 @@ def main() -> None:
         default=".",
         help="Path to the Git repository (default: current directory)",
     )
-    parser.add_argument(
-        "--tag-pattern", default="rel-*", help="Pattern for release tags"
-    )
+    parser.add_argument("--tag-pattern", default="rel-*", help="Pattern for release tags")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()

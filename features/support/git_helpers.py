@@ -1,17 +1,13 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 
 def init_repo(repo_path: Path) -> None:
     """Initialize a Git repository with user config."""
 
     subprocess.run(["git", "init"], cwd=repo_path, check=True)
-    subprocess.run(
-        ["git", "config", "user.name", "Test User"], cwd=repo_path, check=True
-    )
-    subprocess.run(
-        ["git", "config", "user.email", "test@example.com"], cwd=repo_path, check=True
-    )
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo_path, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo_path, check=True)
 
 
 def create_commit(repo_path: Path, message: str) -> str:

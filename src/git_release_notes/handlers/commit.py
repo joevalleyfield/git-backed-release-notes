@@ -7,9 +7,9 @@ commit using `git describe`, `rev-list`, and `merge-base`.
 
 import fnmatch
 import logging
-from pathlib import Path
 import re
 import subprocess
+from pathlib import Path
 
 from tornado.web import HTTPError, RequestHandler
 
@@ -21,7 +21,6 @@ from ..utils.git import (
     get_describe_name,
     run_git,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +159,7 @@ class CommitResolveHandler(RequestHandler):
     (abbreviated SHA, branch name, tag, etc.) into a full commit SHA
     and redirects to the canonical /commit/<full_sha> URL.
     """
+
     def get(self, rev_input: str):
         """
         Handle GET /commit/<rev>.
@@ -169,7 +169,6 @@ class CommitResolveHandler(RequestHandler):
         is returned. Redirect is temporary (302) to avoid client-side
         caching during development.
         """
-
 
         # Git refname rules:
         # - Each pathname component (between slashes) is limited to 255 bytes.
@@ -182,7 +181,7 @@ class CommitResolveHandler(RequestHandler):
         try:
             result = run_git(self.application.settings["repo_path"], "rev-parse", rev)
             full_sha = result.stdout.strip()
-        except subprocess.CalledProcessError:
-            raise HTTPError(404, f"Revision {rev_input} not found")
+        except subprocess.CalledProcessError as err:
+            raise HTTPError(404, f"Revision {rev_input} not found") from err
 
         self.redirect(f"/commit/{full_sha}", permanent=True)

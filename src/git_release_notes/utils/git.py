@@ -6,16 +6,15 @@ Includes:
 - get_commit_parents_and_children: Return the parent and child SHAs for a given commit.
 """
 
-from collections import defaultdict
 import fnmatch
-from functools import lru_cache
 import logging
 import re
 import subprocess
+from collections import defaultdict
+from functools import lru_cache
 from time import perf_counter
 from types import SimpleNamespace
 from typing import Dict, List, Tuple
-
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +28,7 @@ def run_git(repo_path: str, *args: str, **kwargs) -> subprocess.CompletedProcess
     Keeps cwd pinned to the repo.
     """
     start = perf_counter()
-    cp = subprocess.run(
-        ["git", *args], cwd=repo_path, text=True, capture_output=True, **kwargs
-    )
+    cp = subprocess.run(["git", *args], cwd=repo_path, text=True, capture_output=True, **kwargs)
 
     dt_ms = (perf_counter() - start) * 1000.0
     _record_git_stat(args, dt_ms)
@@ -39,7 +36,9 @@ def run_git(repo_path: str, *args: str, **kwargs) -> subprocess.CompletedProcess
     return cp
 
 
-_git_stats: Dict[Tuple[str, ...], Dict[str, float]] = defaultdict(lambda: {"count": 0, "total_ms": 0.0, "max_ms": 0.0})
+_git_stats: Dict[Tuple[str, ...], Dict[str, float]] = defaultdict(
+    lambda: {"count": 0, "total_ms": 0.0, "max_ms": 0.0}
+)
 
 
 def _record_git_stat(args: Tuple[str, ...], dt_ms: float) -> None:
@@ -61,9 +60,11 @@ def get_git_stats(sort_by: str = "total_ms") -> list[tuple[Tuple[str, ...], Dict
     Returns a sorted list of (args_tuple, stats_dict) where stats_dict has count/total_ms/max_ms.
     sort_by ∈ {'total_ms','count','max_ms'}
     """
-    key = {"total_ms": lambda kv: kv[1]["total_ms"],
-           "count":    lambda kv: kv[1]["count"],
-           "max_ms":   lambda kv: kv[1]["max_ms"]}[sort_by]
+    key = {
+        "total_ms": lambda kv: kv[1]["total_ms"],
+        "count": lambda kv: kv[1]["count"],
+        "max_ms": lambda kv: kv[1]["max_ms"],
+    }[sort_by]
 
     return sorted(_git_stats.items(), key=key, reverse=True)
 
@@ -118,9 +119,7 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
                 paths.append(path)
             i += 1
 
-        logger.debug(
-            "commit #%d: sha=%s, message=%r, files=%r", idx, sha, message, paths
-        )
+        logger.debug("commit #%d: sha=%s, message=%r, files=%r", idx, sha, message, paths)
         rows.append(
             {
                 "id": idx,
@@ -137,9 +136,7 @@ def extract_commits_from_git(repo_path: str) -> list[dict]:
 
 
 @lru_cache(maxsize=None)
-def get_commit_parents_and_children(
-    sha: str, repo_path: str
-) -> Tuple[List[str], List[str]]:
+def get_commit_parents_and_children(sha: str, repo_path: str) -> Tuple[List[str], List[str]]:
     """
     Return the parent and child SHAs for a given commit.
 
@@ -186,9 +183,7 @@ def get_tag_commit_sha(tag: str, repo_path: str) -> str:
     ).stdout.strip
 
 
-def find_follows_tag(
-    sha: str, repo_path: str, tag_pattern: str
-) -> SimpleNamespace | None:
+def find_follows_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNamespace | None:
     """
     Finds the nearest matching tag that precedes the given commit (excluding its own tag).
 
@@ -228,9 +223,7 @@ def find_follows_tag(
         return None
 
 
-def find_precedes_tag(
-    sha: str, repo_path: str, tag_pattern: str
-) -> SimpleNamespace | None:
+def find_precedes_tag(sha: str, repo_path: str, tag_pattern: str) -> SimpleNamespace | None:
     """
     Walks the commit graph forward from the given SHA to find the first descendant
     with a tag matching the given pattern.
@@ -256,9 +249,7 @@ def find_precedes_tag(
 
         logger.debug("rev-list contains %d commits", len(rev_list))
         if sha not in rev_list:
-            logger.warning(
-                "Commit %s not found in rev-list --topo-order --reverse", sha
-            )
+            logger.warning("Commit %s not found in rev-list --topo-order --reverse", sha)
 
         try:
             i = rev_list.index(sha)
@@ -353,9 +344,7 @@ def get_matching_tag_commits(repo_path: str, pattern: str) -> dict[str, str]:
     for tag_name, sha in all_tags.items():
         if fnmatch.fnmatch(tag_name, pattern):
             tag_shas[sha] = tag_name
-    logger.debug(
-        "Filtered %d matching tags for pattern '%s'", len(tag_shas), pattern
-    )
+    logger.debug("Filtered %d matching tags for pattern '%s'", len(tag_shas), pattern)
     return tag_shas
 
 

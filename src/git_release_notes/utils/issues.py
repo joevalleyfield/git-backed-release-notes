@@ -3,6 +3,7 @@ from typing import Sequence
 
 from .commit_parsing import extract_issue_slugs
 
+
 def find_commits_referring_to_issue(slug: str, commits: Sequence[SimpleNamespace]) -> list[SimpleNamespace]:
     referring = []
 
@@ -20,10 +21,7 @@ def find_commits_referring_to_issue(slug: str, commits: Sequence[SimpleNamespace
 
         # Check 3: touched paths
         paths = getattr(row, "touched_paths", []) or []
-        if (
-            f"issues/open/{slug}.md" in paths or
-            f"issues/closed/{slug}.md" in paths
-        ):
+        if f"issues/open/{slug}.md" in paths or f"issues/closed/{slug}.md" in paths:
             referring.append(row)
 
     return referring

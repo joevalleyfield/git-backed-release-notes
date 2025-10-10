@@ -1,11 +1,9 @@
 """Steps for commits.feature."""
 
-import requests
-
-from behave import when, then  # pylint: disable=no-name-in-module
-from hamcrest import assert_that, contains_string, equal_to
-
 import pandas as pd
+import requests
+from behave import then, when  # pylint: disable=no-name-in-module
+from hamcrest import assert_that, contains_string, equal_to
 
 # pylint: disable=missing-function-docstring
 

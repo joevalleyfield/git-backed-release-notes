@@ -96,15 +96,13 @@ else
     pip install -e ".[test]"
 fi
 
-if python -m pip show ruff >/dev/null 2>&1; then
-    echo "[ci-local] Running ruff lint"
-    ruff check src tests
-elif python -m pip show flake8 >/dev/null 2>&1; then
-    echo "[ci-local] Running flake8 lint"
-    flake8 src tests
-else
-    echo "[ci-local] No lint tool detected (install ruff or flake8 to enable lint step)"
+if ! command -v ruff >/dev/null 2>&1; then
+    echo "[ci-local] Ruff is required for linting; ensure test extras are installed" >&2
+    exit 3
 fi
+
+echo "[ci-local] Running ruff lint"
+ruff check .
 
 echo "[ci-local] Running pytest"
 pytest --maxfail=1 --disable-warnings

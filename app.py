@@ -11,6 +11,5 @@ if SRC_DIR.exists():
 
 from git_release_notes.__main__ import main  # noqa: E402
 
-
 if __name__ == "__main__":
     main()

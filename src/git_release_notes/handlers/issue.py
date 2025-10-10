@@ -1,11 +1,11 @@
 import logging
 import os
-from pathlib import Path
 import re
+from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import quote
 
-from tornado.web import RequestHandler, HTTPError
+from tornado.web import HTTPError, RequestHandler
 
 from ..utils.git import extract_commits_from_git
 from ..utils.issues import find_commits_referring_to_issue
@@ -49,17 +49,10 @@ class IssueDetailHandler(RequestHandler):
             logger.warning("Failed to reload commit metadata store: %s", e)
         sha_list = commit_metadata_store.shas_for_issue(slug)
 
-
         # Scan all commits and filter only those matching spreadsheet-linked SHAs
-        scanned_commits = [
-            SimpleNamespace(**row)
-            for row in extract_commits_from_git(repo_path)
-        ]
+        scanned_commits = [SimpleNamespace(**row) for row in extract_commits_from_git(repo_path)]
 
-        linked_commits = [
-            row for row in scanned_commits
-            if row.sha in sha_list
-        ]
+        linked_commits = [row for row in scanned_commits if row.sha in sha_list]
 
         logger.debug("linked_commits: %s", sha_list)
 
@@ -69,7 +62,7 @@ class IssueDetailHandler(RequestHandler):
         for row in referring:
             if row.sha not in {c.sha for c in linked_commits}:
                 linked_commits.append(row)
-        
+
         self.render(
             "issue.html",
             slug=slug,
@@ -79,30 +72,30 @@ class IssueDetailHandler(RequestHandler):
         )
 
 
-_NEWLINE_RE = re.compile(r'\r\n|\r|\n')
+_NEWLINE_RE = re.compile(r"\r\n|\r|\n")
 
 
 def detect_dominant_eol(s: str) -> str | None:
     """Return '\r\n', '\n', or '\r' if s contains newlines; pick the dominant one.
     Return None if no newlines found."""
-    crlf = s.count('\r\n')
+    crlf = s.count("\r\n")
     # Count lone CR and LF that aren't part of CRLF (simple but works well enough)
     # Replace CRLF temporarily to avoid double-count
-    tmp = s.replace('\r\n', '\0')
-    cr = tmp.count('\r')
-    lf = tmp.count('\n')
+    tmp = s.replace("\r\n", "\0")
+    cr = tmp.count("\r")
+    lf = tmp.count("\n")
     if crlf == cr == lf == 0:
         return None
     # Choose the most frequent; break ties preferring CRLF, then LF.
-    counts = [('\r\n', crlf), ('\n', lf), ('\r', cr)]
+    counts = [("\r\n", crlf), ("\n", lf), ("\r", cr)]
     counts.sort(key=lambda x: x[1], reverse=True)
     return counts[0][0]
 
 
 def normalize_to(s: str, target_eol: str) -> str:
     # First normalize everything to LF, then to target
-    s_lf = _NEWLINE_RE.sub('\n', s)
-    return s_lf.replace('\n', target_eol)
+    s_lf = _NEWLINE_RE.sub("\n", s)
+    return s_lf.replace("\n", target_eol)
 
 
 class IssueUpdateHandler(RequestHandler):

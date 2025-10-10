@@ -5,24 +5,21 @@ launches the Tornado app server before all tests, and tears everything down afte
 """
 
 import os
-from dataclasses import dataclass
-from io import StringIO
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import threading
 import time
+from dataclasses import dataclass
+from io import StringIO
+from pathlib import Path
 from types import SimpleNamespace
 
-from behave import fixture, use_fixture
-
 import pandas as pd
-from playwright.sync_api import sync_playwright
-
-from features.support.git_helpers import init_repo, create_commit, tag_commit
+from behave import fixture, use_fixture
+from features.support.git_helpers import create_commit, init_repo, tag_commit
 from features.support.issue_helpers import link_commit_to_issue
-
+from playwright.sync_api import sync_playwright
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT_DIR / "src"
@@ -118,9 +115,7 @@ class ServerProcess:
                 proc.kill()
             raise
 
-        return cls(
-            proc=proc, stdout=stdout, stderr=stderr, base_url=f"http://localhost:{port}"
-        )
+        return cls(proc=proc, stdout=stdout, stderr=stderr, base_url=f"http://localhost:{port}")
 
 
 class ServerFarm:
@@ -244,6 +239,7 @@ def playwright_browser(context, *args, **kwargs):
     context.browser.close()
     context.playwright.stop()
 
+
 # --- BEHAVE HOOKS ---
 
 
@@ -251,6 +247,7 @@ def before_all(context):
     """Apply the composite fixture at the start of the test suite."""
 
     use_fixture(composite_fixture, context)
+
 
 def before_tag(context, tag):
     if tag == "javascript":

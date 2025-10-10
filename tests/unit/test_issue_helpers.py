@@ -1,5 +1,6 @@
 from git_release_notes.handlers.issue import find_issue_file
 
+
 def test_find_issue_file_finds_open(tmp_path):
     issues_dir = tmp_path / "issues"
     open_path = issues_dir / "open" / "foo.md"
@@ -8,6 +9,7 @@ def test_find_issue_file_finds_open(tmp_path):
 
     found = find_issue_file("foo", issues_dir)
     assert found == open_path
+
 
 def test_find_issue_file_prefers_open_when_both_exist(tmp_path):
     issues_dir = tmp_path / "issues"
@@ -21,6 +23,7 @@ def test_find_issue_file_prefers_open_when_both_exist(tmp_path):
     found = find_issue_file("bar", issues_dir)
     assert found == open_path
 
+
 def test_find_issue_file_returns_closed_if_only_closed_exists(tmp_path):
     issues_dir = tmp_path / "issues"
     closed_path = issues_dir / "closed" / "baz.md"
@@ -29,6 +32,7 @@ def test_find_issue_file_returns_closed_if_only_closed_exists(tmp_path):
 
     found = find_issue_file("baz", issues_dir)
     assert found == closed_path
+
 
 def test_find_issue_file_returns_none_if_missing(tmp_path):
     issues_dir = tmp_path / "issues"

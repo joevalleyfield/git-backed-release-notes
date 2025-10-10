@@ -1,9 +1,9 @@
 """Steps for edit_from_index.feature."""
 
 import requests
-from behave import when, then
-from hamcrest import assert_that, contains_string, equal_to, is_not, none
+from behave import then, when
 from bs4 import BeautifulSoup
+from hamcrest import assert_that, contains_string, equal_to, is_not, none
 
 
 @when('I submit a new issue slug "{slug}" for that commit via the index form')

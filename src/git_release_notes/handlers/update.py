@@ -4,10 +4,10 @@ UpdateCommitHandler: Handles POST updates to commit metadata.
 Supports in-memory editing of 'issue' and 'release' fields and writes changes
 back to the spreadsheet using an atomic Excel save.
 """
+
 import logging
 
 from tornado.web import HTTPError, RequestHandler
-
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())  # safe default

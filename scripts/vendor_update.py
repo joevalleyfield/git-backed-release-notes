@@ -13,7 +13,7 @@ import tarfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
-from urllib.error import URLError, HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -42,43 +42,75 @@ class DownloadPlan:
 ASSETS: List[DownloadPlan] = [
     DownloadPlan(
         source_url="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css",
-        files=[AssetFile(url="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css",
-                         dest=VENDOR_DIR / "bootstrap-5.3.7.min.css")],
+        files=[
+            AssetFile(
+                url="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css",
+                dest=VENDOR_DIR / "bootstrap-5.3.7.min.css",
+            )
+        ],
     ),
     DownloadPlan(
         source_url="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js",
-        files=[AssetFile(url="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js",
-                         dest=VENDOR_DIR / "bootstrap-5.3.7.bundle.min.js")],
+        files=[
+            AssetFile(
+                url="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js",
+                dest=VENDOR_DIR / "bootstrap-5.3.7.bundle.min.js",
+            )
+        ],
     ),
     DownloadPlan(
         source_url="https://cdn.jsdelivr.net/npm/diff2html@3.4.52/bundles/css/diff2html.min.css",
-        files=[AssetFile(url="https://cdn.jsdelivr.net/npm/diff2html@3.4.52/bundles/css/diff2html.min.css",
-                         dest=VENDOR_DIR / "diff2html-3.4.52.min.css")],
+        files=[
+            AssetFile(
+                url="https://cdn.jsdelivr.net/npm/diff2html@3.4.52/bundles/css/diff2html.min.css",
+                dest=VENDOR_DIR / "diff2html-3.4.52.min.css",
+            )
+        ],
     ),
     DownloadPlan(
         source_url="https://cdn.jsdelivr.net/npm/diff2html@3.4.52/bundles/js/diff2html-ui.min.js",
-        files=[AssetFile(url="https://cdn.jsdelivr.net/npm/diff2html@3.4.52/bundles/js/diff2html-ui.min.js",
-                         dest=VENDOR_DIR / "diff2html-ui-3.4.52.min.js")],
+        files=[
+            AssetFile(
+                url="https://cdn.jsdelivr.net/npm/diff2html@3.4.52/bundles/js/diff2html-ui.min.js",
+                dest=VENDOR_DIR / "diff2html-ui-3.4.52.min.js",
+            )
+        ],
     ),
     DownloadPlan(
         source_url="https://cdn.jsdelivr.net/npm/easymde@2.20.0/dist/easymde.min.css",
-        files=[AssetFile(url="https://cdn.jsdelivr.net/npm/easymde@2.20.0/dist/easymde.min.css",
-                         dest=VENDOR_DIR / "easymde-2.20.0.min.css")],
+        files=[
+            AssetFile(
+                url="https://cdn.jsdelivr.net/npm/easymde@2.20.0/dist/easymde.min.css",
+                dest=VENDOR_DIR / "easymde-2.20.0.min.css",
+            )
+        ],
     ),
     DownloadPlan(
         source_url="https://cdn.jsdelivr.net/npm/easymde@2.20.0/dist/easymde.min.js",
-        files=[AssetFile(url="https://cdn.jsdelivr.net/npm/easymde@2.20.0/dist/easymde.min.js",
-                         dest=VENDOR_DIR / "easymde-2.20.0.min.js")],
+        files=[
+            AssetFile(
+                url="https://cdn.jsdelivr.net/npm/easymde@2.20.0/dist/easymde.min.js",
+                dest=VENDOR_DIR / "easymde-2.20.0.min.js",
+            )
+        ],
     ),
     DownloadPlan(
         source_url="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js",
-        files=[AssetFile(url="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js",
-                         dest=VENDOR_DIR / "marked-15.0.12.min.js")],
+        files=[
+            AssetFile(
+                url="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js",
+                dest=VENDOR_DIR / "marked-15.0.12.min.js",
+            )
+        ],
     ),
     DownloadPlan(
         source_url="https://cdn.jsdelivr.net/npm/dompurify@3.1.3/dist/purify.min.js",
-        files=[AssetFile(url="https://cdn.jsdelivr.net/npm/dompurify@3.1.3/dist/purify.min.js",
-                         dest=VENDOR_DIR / "dompurify-3.1.3.min.js")],
+        files=[
+            AssetFile(
+                url="https://cdn.jsdelivr.net/npm/dompurify@3.1.3/dist/purify.min.js",
+                dest=VENDOR_DIR / "dompurify-3.1.3.min.js",
+            )
+        ],
     ),
     DownloadPlan(
         source_url="https://registry.npmjs.org/@fortawesome/fontawesome-free/-/fontawesome-free-6.5.2.tgz",

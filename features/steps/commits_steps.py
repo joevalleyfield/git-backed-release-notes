@@ -1,11 +1,11 @@
 """Steps for commits.feature."""
 
 import re
-import requests
 
-from behave import given, when, then  # pylint: disable=no-name-in-module
-from hamcrest import assert_that, contains_string, equal_to, is_not, none, not_
+import requests
+from behave import given, then, when  # pylint: disable=no-name-in-module
 from bs4 import BeautifulSoup
+from hamcrest import assert_that, contains_string, equal_to, is_not, none, not_
 
 from git_release_notes.utils.git import get_commit_parents_and_children
 
@@ -15,6 +15,7 @@ from git_release_notes.utils.git import get_commit_parents_and_children
 @given('a known commit "{commit_label}" with issue "{issue_slug}"')
 def step_known_commit_with_issue(context, commit_label, issue_slug):
     context.commit_sha = context.fixture_repo.sha_map[commit_label]
+
 
 def _resolve_sha_from_alias(context, alias: str) -> str:
     fr = context.fixture_repo
@@ -27,7 +28,7 @@ def _resolve_sha_from_alias(context, alias: str) -> str:
     if alias in ("first", "initial"):
         return fr.shas[0]
     if alias in ("middle",):
-        return fr.shas[len(fr.shas)//2] if len(fr.shas) > 2 else fr.shas[0]
+        return fr.shas[len(fr.shas) // 2] if len(fr.shas) > 2 else fr.shas[0]
     if alias in ("latest", "last"):
         return fr.shas[-1]
 
@@ -42,6 +43,7 @@ def _resolve_sha_from_alias(context, alias: str) -> str:
                 return s
 
     raise ValueError(f"Unknown commit alias: {alias}")
+
 
 @given('a known commit "{alias}"')
 def step_known_commit(context, alias):
@@ -107,11 +109,13 @@ def step_assert_release_field_present(context):
     assert '<label for="release"' in context.response.text
     assert 'name="release"' in context.response.text
 
+
 @then('the page should contain a link labeled "{label}"')
 def step_assert_link_label_present(context, label):
     soup = BeautifulSoup(context.response.text, "html.parser")
     links = soup.find_all("a")
     assert any(label in link.text for link in links), f"Expected link labeled '{label}' not found."
+
 
 @then("the page should contain a link to the parent of that commit")
 def step_assert_parent_link_present(context):
