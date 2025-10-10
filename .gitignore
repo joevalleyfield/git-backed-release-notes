@@ -3,6 +3,7 @@ dist/
 build/
 *.egg-info/
 src/git_release_notes/static/vendor
+sbom.cdx.json
 
 # Codex/uv cache (kept local, not committed)
 .codex_cache/

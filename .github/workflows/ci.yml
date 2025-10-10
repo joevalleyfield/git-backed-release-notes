@@ -31,3 +31,13 @@ jobs:
 
       - name: Run ci-local script
         run: ./scripts/ci-local.sh --locked
+
+      - name: Generate CycloneDX SBOM
+        run: uv tool run --from cyclonedx-bom cyclonedx-py requirements requirements-dev.lock --pyproject pyproject.toml --of JSON --output-file sbom.cdx.json
+
+      - name: Upload SBOM artifact
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.python-version }}
+          path: sbom.cdx.json
