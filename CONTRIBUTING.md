@@ -27,6 +27,7 @@
 - Always run `pytest` before `behave`; Behave depends on a clean local Git repo and open localhost ports.
 
 ## Commit & Pull Request Guidelines
-- Follow existing prefixes: `feat:`, `fix:`, `docs:`, `build:`, `test:`, `issue: close ...`, etc. Use imperative mood (e.g., `feat: migrate entry point into src layout`).
+- Start the subject line with the established prefixes: `feat:`, `fix:`, `docs:`, `build:`, `test:`, `issue:`, etc., and keep the verb in imperative mood (e.g., `feat: migrate entry point into src layout`). When using tools like `jj describe`, leave a blank line between the tagged subject and the body for readability.
+- Use `issue:` commits to open, update, or close issue notes when a conventional tag such as `docs:` would be misleading; for example, `issue: wrap up bootstrap-ci plan`.
 - Reference related issue files in the description (e.g., "See `issues/open/suggest-issues-on-index.md`").
 - PRs should summarize behavior changes, note testing performed (`pytest`, `behave`), and include screenshots for UI shifts when practical.
