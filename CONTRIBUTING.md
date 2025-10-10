@@ -8,10 +8,11 @@
 
 ## Build, Test, and Development Commands
 - Full check before a PR: `./scripts/ci-local.sh` provisions its own virtualenv, installs `[test]` extras with `uv` when available (falls back to `pip`), installs Playwright browsers, then runs `ruff`, `pytest`, and the full Behave suite (including `@javascript`). Use `--locked` to sync against `requirements-dev.lock`, or `--skip-behave` / `--skip-playwright-install` while iterating.
-- Lint the repo: `uv tool run ruff check .` (CI runs the same command and enforces import sorting, bugbear, and comprehension rules).
-- Format code: `uv tool run black .` to apply Black's opinionated formatting (CI verifies with `--check`).
-- Type-check hot paths: `uv tool run mypy` (currently targets `src/git_release_notes/utils`).
-- Install pre-commit hooks: `uv tool run pre-commit install` so `ruff`, `black`, and `mypy` run before each commit; run `uv tool run pre-commit run --all-files` to mirror CI.
+- Lint the repo: run `./scripts/run-ruff.sh` (or `uv tool run ruff check .`); CI enforces the same rules.
+- Format code: run `./scripts/run-black.sh` to apply Black’s formatting (CI verifies with `--check`).
+- Type-check hot paths: run `./scripts/run-mypy.sh` (currently targets `src/git_release_notes/utils`).
+- Install pre-commit hooks: `uv tool run pre-commit install` so lint/format/type checks run before each commit; `./scripts/run-precommit.sh run --all-files` mirrors CI.
+- Optional aliases: `source scripts/aliases.sh` to expose `ruff-run`, `black-run`, `mypy-run`, and `pre-commit-run` shortcuts.
 - Generate an SBOM matching CI: `uv tool run --from cyclonedx-bom cyclonedx-py environment .venv-ci-local --pyproject pyproject.toml --of JSON --output-file sbom.cdx.json`.
 - Launch the UI: `python -m git_release_notes --repo /path/to/repo [--excel-path commits.xlsx]` (console alias: `git-release-notes`).
 - Install dev dependencies: `python -m pip install -e .[test]` (or `uv pip install -e .[test]`) to get runtime + test extras.
