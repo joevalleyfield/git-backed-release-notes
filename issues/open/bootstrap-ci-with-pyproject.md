@@ -27,10 +27,10 @@
     - Verify the script against macOS dev environment (no containers yet).
 
     ### Phase B — Bootstrap GitHub Actions CI
-    - Create `.github/workflows/test.yml` with Python `3.10` and `3.11` strategy, installing via `uv pip install -e .[test]` (with `pip` as contingency).
-    - Run `ruff` (or `flake8` if ruff isn’t ready) and `pytest --maxfail=1 --disable-warnings`, then execute targeted Behave tags that finish quickly (skip Playwright until runners are tuned).
+    - Create `.github/workflows/test.yml` with Python `3.11` and `3.12` strategy, installing via `uv pip install -e .[test]` (with `pip` as contingency).
+    - Run `ruff` (or `flake8` if ruff isn’t ready) and `pytest --maxfail=1 --disable-warnings`, then execute the full Behave suite with Playwright-backed scenarios since caching and the local script already keep runtimes acceptable.
     - Fail fast when dependency ranges pull incompatible versions; this exposes locking needs naturally.
-    - Upload pytest cache or coverage artifacts if helpful for debugging (optional at this stage).
+    - Upload pytest cache, Playwright browser cache, or coverage artifacts if helpful for debugging (optional at this stage).
 
     ### Phase C — Introduce `uv` lockfiles for CI stability
     - Use `uv lock` (or `uv pip compile`) to produce `uv.lock` plus extracted `requirements.lock` and `requirements-dev.lock` for environments that still expect pip-style files.
@@ -44,9 +44,9 @@
     - On release tags (`rel-*`), extend the workflow to attach SBOM and release notes artifacts.
 
     ### Phase E — Expand coverage (optional follow-ons)
-    - Re-enable full Behave suite and Playwright once runners are tuned (might require service containers or custom GitHub-hosted runners).
-    - Consider matrixing Postgres-backed tests if/when the app depends on external services.
-    - Evaluate publishing Docker images or PyPI packages as part of releases once CI is stable.
+    - Add deeper service integrations (for example Postgres-backed tests) when the app depends on external services.
+    - Evaluate cross-browser Playwright runs or additional Python versions as long-term capacity improves.
+    - Explore publishing Docker images or PyPI packages as part of releases once CI is stable.
 
     ## Acceptance signals per phase
     - **Phase A:** `scripts/ci-local.sh` succeeds on macOS; documented in `CONTRIBUTING.md`.
@@ -64,3 +64,6 @@
 
     ## Next action
     - Build `scripts/ci-local.sh` and validate it against the existing `pyproject.toml` dependencies. This is the enabling step for both developers and CI.
+
+    ## Comments
+    - 2025-10-09: Updated Phase B/E to reflect the current Python 3.11/3.12 matrix and confidence in running full Playwright-backed Behave coverage with caching.
