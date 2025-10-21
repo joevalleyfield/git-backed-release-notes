@@ -11,3 +11,5 @@ alias ruff-run="$(pwd)/scripts/run-ruff.sh"
 alias black-run="$(pwd)/scripts/run-black.sh"
 alias mypy-run="$(pwd)/scripts/run-mypy.sh"
 alias pre-commit-run="$(pwd)/scripts/run-precommit.sh"
+
+source <(./scripts/jj-gen-aliases.sh)
