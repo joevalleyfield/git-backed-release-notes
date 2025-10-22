@@ -37,3 +37,82 @@
 - Use `issue:` commits to open, update, or close issue notes when a conventional tag such as `docs:` would be misleading; for example, `issue: wrap up bootstrap-ci plan`.
 - Reference related issue files in the description (e.g., "See `issues/open/suggest-issues-on-index.md`").
 - PRs should summarize behavior changes, note testing performed (`pytest`, `behave`), and include screenshots for UI shifts when practical.
+
+## JJ-Specific Collaboration Playbook
+
+### Our change states
+- **Drafts**: `mutable()`; rewrite at will.
+- **Reviewable**: drafts you’ve named with a topic bookmark (`tjm/*`) for coherent diffs.
+- **Publishable**: commits under `main` / `release/*` are **immutable** by policy.
+
+### Colocated reality: “observing” snapshots the working copy
+- Commands like `jj status`, `jj show`, or `jj log @` refresh the working-copy commit. In colocated repos that means new/updated Git objects under `refs/jj/keep/*`. Seeing churn there is normal.
+
+### Tip-fix vs patch-in-place
+- **Tip-fix (default):** add a new change now (or edit your current empty change), describe first, then make the correction. Don’t rewrite immutables.
+  ```bash
+  jj describe -m "fix: remove stray update_foo.sh"
+  rm update_foo.sh
+  jj status
+  ```
+- **Patch-in-place:** only when descendants *must* inherit the fix; fork from the old immutable and merge forward.
+
+### Issue notes: `## Postscript`
+Add follow-ups to closed issues without reopening them:
+```md
+## Postscript
+YYYY-MM-DD: short note (change <change_id>)
+```
+
+## “Mutable Courier” (self-sync drafts via Git refs)
+
+We use Git as a transport for JJ’s mutable state under `refs/jj/mutable/*`.
+
+**Per-repo `.git/config`:**
+```ini
+[remote "origin"]
+    fetch = +refs/heads/*:refs/remotes/origin/*
+    fetch = +refs/jj/mutable/*:refs/jj/mutable/*
+    push  = +refs/heads/*:refs/heads/*
+    push  = +refs/jj/mutable/*:refs/jj/mutable/*
+[transfer]
+    hideRefs = refs/jj/
+```
+> We explicitly reference `refs/jj/mutable/*` in our scripts, so `hideRefs` won’t block usage; it just keeps other `refs/jj/*` noise out of Git tooling.
+
+**Helper scripts (in `scripts/`)**
+- `jj-push-mutable.sh <topic-or-change-id>` → points `refs/jj/mutable/<…>` at the current change’s **commit** and pushes it.
+- `jj-pull-mutable.sh <topic-or-change-id>` → fetches and `jj checkout`’s the courier ref.
+
+**Handy commands**
+```bash
+# enumerate courier refs on the remote
+git ls-remote origin "refs/jj/mutable/*"
+
+# delete an accidental remote ref
+git push origin :refs/jj/mutable/NAME
+git update-ref -d refs/jj/mutable/NAME  # local cleanup
+```
+
+**Listing namespaces (discovery without guessing)**
+```bash
+git ls-remote origin | cut -f2 | cut -d/ -f1-2 | sort -u         # top-level
+git ls-remote origin | grep '^refs/jj/' | cut -d/ -f1-3 | sort -u # under refs/jj/
+```
+
+## Shell aliases & tracing
+
+- We auto-alias `scripts/jj-*.sh` via:
+  ```bash
+  # in scripts/aliases.sh
+  if [ -x ./scripts/jj-gen-aliases.sh ]; then
+    source <(./scripts/jj-gen-aliases.sh)
+  fi
+  ```
+  The generator skips itself, so you won’t get a `jj-gen-aliases` alias.
+
+- Trace a helper cleanly (no prompt noise):
+  ```bash
+  zsh -x ./scripts/jj-push-mutable.sh mytopic
+  # or bash -x ...
+  ```
