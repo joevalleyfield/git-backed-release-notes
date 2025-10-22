@@ -68,3 +68,7 @@ project toward a modern Python package layout.
 - Required prerequisite for `issues/open/create-monolith-bundler.md`
 - Enables bundler to treat `src/git_release_notes` as the authoritative source tree
 - Opens the door for wheel/zipapp distribution and cleaner dependency management
+
+## Postscript
+
+2025-10-22: remove stray update-foo.sh script
