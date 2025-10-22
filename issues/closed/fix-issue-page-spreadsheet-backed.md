@@ -1,9 +1,8 @@
 # Fix: Issue page with spreadsheet-backed metadata store
 
 ## Problem
-Visiting an issue page fails when the `SpreadsheetCommitMetadataStore` is in use.
-The handler directly touches `.df` on the store, which is a private implementation detail.
-As a result, associated commits are not found and the page does not load.
+Issue page needed spreadsheet support hardening.
+Originally the handler touched `.df` on the metadata store and failed when `SpreadsheetCommitMetadataStore` was active; that API has since been abstracted, but regression tests were missing.
 
 ## Proposed Fix
 - Add `reload()` and `shas_for_issue(slug)` methods to the `CommitMetadataStore` ABC.
@@ -16,11 +15,11 @@ As a result, associated commits are not found and the page does not load.
 - Tests show issue-to-commit linking works for both store types.
 
 ## Status
-open
+closed
 
 ## Tags
-spiked, needs-tests
+tested
 
 ## Notes
 - 2025-10-22: Added unit coverage for `DataFrameCommitMetadataStore` and `SpreadsheetCommitMetadataStore` (`shas_for_issue`, `reload`) in `tests/unit/test_metadata_store.py`.
-- Still missing a Behave scenario that visits `/issue/<slug>` while the app runs in `@with_xlsx` mode to prove spreadsheet-backed issue views work end-to-end.
+- 2025-10-22: Added `features/issue_spreadsheet_mode.feature` to exercise the issue detail page in spreadsheet mode and confirm linked commits render.
