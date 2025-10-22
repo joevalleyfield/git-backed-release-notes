@@ -119,6 +119,15 @@
       box-sizing: border-box;
     }
 
+    .commit-table td[data-label="issue"] {
+      white-space: normal;
+    }
+
+    .issue-suggestion-hint {
+      display: block;
+      white-space: normal;
+    }
+
     }
 
 
@@ -152,9 +161,23 @@
 
 
               <td data-label="issue">
-                <input name="issue" form="form-{{ row['sha'] }}" value="{{ row.get('issue', '') }}" placeholder="(no issue)">
-                {% if row.get("issue") %}
-                  <a href="/issue/{{ row['issue'] }}">🔗</a>
+                <div class="d-flex align-items-center gap-1">
+                  <input name="issue" form="form-{{ row['sha'] }}" value="{{ row.get('issue', '') }}" placeholder="(no issue)">
+                  {% if row.get("issue") %}
+                    <a href="/issue/{{ row['issue'] }}">🔗</a>
+                  {% end %}
+                </div>
+                {% if row.get("issue_suggestion") %}
+                <div class="form-text issue-suggestion-hint mt-1 d-flex flex-wrap gap-2 align-items-center" data-test="issue-suggestion">
+                  <button
+                    type="button"
+                    class="btn btn-link btn-sm p-0 issue-suggestion-apply"
+                    data-issue="{{ row['issue_suggestion'] }}"
+                  >
+                    Use
+                  </button>
+                  <a class="link-underline link-underline-opacity-0" href="/issue/{{ row['issue_suggestion'] }}">{{ row["issue_suggestion"] }}</a>
+                </div>
                 {% end %}
               </td>
 
@@ -263,6 +286,22 @@
             input.blur();
             saveInputChange(input, { restoreCursorOnSave: true });
           }
+        });
+      });
+
+      document.querySelectorAll(".issue-suggestion-apply").forEach(button => {
+        button.addEventListener("click", () => {
+          const cell = button.closest("td");
+          const input = cell?.querySelector('input[name="issue"]');
+          if (!input) {
+            return;
+          }
+          const suggestion = button.dataset.issue || "";
+          if (input.value !== suggestion) {
+            input.value = suggestion;
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+          input.focus();
         });
       });
 

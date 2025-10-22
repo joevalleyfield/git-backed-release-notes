@@ -49,6 +49,8 @@ def test_extract_issue_slugs(message, expected_primary, expected_all):
         ("Implemented qux.md", "Implemented", "qux"),
         ("Resolves foo-bar", "Resolves", "foo-bar"),
         ("Fixes #foo-bar.md", "Fixes", "foo-bar"),
+        ("Opens refactor-extract-tag-logic", "Opens", "refactor-extract-tag-logic"),
+        ("opened #refactor-helpers", "opened", "refactor-helpers"),
         # ❌ Invalid or rejected cases
         ("Fixes #Foo", None, None),  # uppercase
         ("Fixes BARE.md", None, None),  # uppercase

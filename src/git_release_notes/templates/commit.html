@@ -99,28 +99,18 @@
           <label for="issue" class="form-label">Issue</label>
           <input type="text" class="form-control" name="issue" id="issue" value="{{ issue_value }}">
           {% if issue_suggestion %}
-          <div id="issue-suggestion" class="form-text mt-2">
-            Suggested issue:
-            <span class="fw-semibold">{{ issue_suggestion }}</span>
-            {% if issue_prefilled %}
-            {% if issue_suggestion_source == "directive" %}
-            <span class="text-muted">(prefilled from commit message)</span>
-            {% elif issue_suggestion_source == "touched" %}
-            <span class="text-muted">(prefilled from touched issue file)</span>
-            {% end %}
-            {% else %}
+          <div id="issue-suggestion" class="form-text mt-2 d-flex flex-wrap gap-2 align-items-center">
+            {% if not issue_prefilled %}
             <button
               type="button"
               id="issue-suggestion-apply"
-              class="btn btn-link btn-sm ps-1 d-inline"
+              class="btn btn-link btn-sm p-0"
               data-issue="{{ issue_suggestion }}"
             >
-              Use this suggestion
+              Use
             </button>
-            {% if issue_suggestion_source == "touched" %}
-            <span class="text-muted">Based on touched issue file</span>
             {% end %}
-            {% end %}
+            <a class="link-underline link-underline-opacity-0" href="/issue/{{ issue_suggestion }}">{{ issue_suggestion }}</a>
           </div>
           {% end %}
         </div>

@@ -6,7 +6,7 @@ Feature: Suggest primary issue on commit detail
 
     When the user visits the commit detail page for "Fixes #auto-suggest"
     Then the issue field should be prefilled with "auto-suggest"
-    And the issue suggestion helper should mention "auto-suggest"
+    And the issue suggestion helper should link to "auto-suggest"
 
   Scenario: Preserve existing issue while offering a suggestion
     Given the issues directory contains an open issue "fresh-suggestion"
@@ -30,4 +30,12 @@ Feature: Suggest primary issue on commit detail
 
     When the user visits the commit detail page for "Update issue doc without directive"
     Then the issue field should be prefilled with "touched-suggestion"
-    And the issue suggestion helper should mention "touched-suggestion"
+    And the issue suggestion helper should link to "touched-suggestion"
+
+  Scenario: Suggest issue from message slug without directive
+    Given the issues directory contains an open issue "message-suggestion"
+    And the Git repository contains a commit "open message-suggestion"
+
+    When the user visits the commit detail page for "open message-suggestion"
+    Then the issue field should be prefilled with "message-suggestion"
+    And the issue suggestion helper should link to "message-suggestion"

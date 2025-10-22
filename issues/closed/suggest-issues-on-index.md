@@ -12,13 +12,14 @@ Display suggested issue slugs next to commits in the index view using the same h
 ## Behavior
 
 - For each commit, extract candidate issue slugs using `extract_issue_slugs()`
-- Display the top match (or all matches) in a lightweight visual form:
-  - As a gray hint label (e.g., “Suggested: #foo-bar”)
-  - As a prefilled but editable field
-- May be linked to editing interaction (e.g., click-to-adopt)
+- Display the top match alongside the issue field as a linked hint with a one-click "Use" action
+- Skip rendering a hint when the stored issue already matches the suggestion
 
 ## Rationale
 
 - Helps users spot and apply likely issue links without leaving the index
 - Reduces need to copy/paste from the commit message
 - Aligns with behavior already available on commit detail page
+
+## Implementation Notes
+2025-10-22: consolidated directive/message/touched suggestions into a shared helper; index renders linked "Use" hint when metadata is empty

@@ -9,7 +9,8 @@ import logging
 
 from tornado.web import RequestHandler
 
-from ..utils.git import extract_commits_from_git
+from ..utils.git import extract_commits_from_git, run_git
+from ..utils.issue_suggestions import compute_issue_suggestion
 from ..utils.metadata_store import CommitMetadataStore
 
 logger = logging.getLogger(__name__)
@@ -66,4 +67,25 @@ class MainHandler(RequestHandler):
                 row["release"] = meta.get("release", "")
                 rows.append(row)
 
+        for row in rows:
+            touched_paths = row.get("touched_paths")
+            if touched_paths is None:
+                touched_paths = self._get_touched_paths(row["sha"])
+
+            suggestion = compute_issue_suggestion(
+                self.repo_path,
+                row.get("message", ""),
+                touched_paths=touched_paths,
+            )
+            suggestion_value = suggestion.suggestion
+            if suggestion_value and suggestion_value == (row.get("issue") or "").strip():
+                suggestion_value = None
+            row["issue_suggestion"] = suggestion_value
+            row["issue_suggestion_source"] = suggestion.suggestion_source if suggestion_value else None
+
         self.render("index.html", rows=rows)
+
+    def _get_touched_paths(self, sha: str) -> list[str]:
+        """Retrieve touched paths for commits lacking precomputed file lists."""
+        result = run_git(self.repo_path, "show", "--name-only", "--pretty=format:", sha, check=True)
+        return [line.strip() for line in result.stdout.splitlines() if line.strip()]

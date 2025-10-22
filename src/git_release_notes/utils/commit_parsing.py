@@ -12,7 +12,8 @@ DIRECTIVE_RE = re.compile(
         (?i:fix(?:es|ed)?
         |close[sd]?
         |resolve[sd]?
-        |implement(?:ed|s)?)
+        |implement(?:ed|s)?
+        |open(?:ed|s)?)
     )
     \b[:]?
     \s+

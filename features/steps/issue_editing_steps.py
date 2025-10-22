@@ -104,13 +104,14 @@ def step_issue_field_prefilled(context, slug):
     assert value == slug, f"Expected issue field to be prefilled with '{slug}', but it was '{value}'"
 
 
-@then('the issue suggestion helper should mention "{slug}"')
-def step_issue_suggestion_helper_mentions(context, slug):
+@then('the issue suggestion helper should link to "{slug}"')
+def step_issue_suggestion_helper_links(context, slug):
     soup = BeautifulSoup(context.response.text, "html.parser")
     suggestion = soup.find(id="issue-suggestion")
     assert suggestion is not None, "Expected an issue suggestion helper on the page"
-    text = suggestion.get_text(" ", strip=True)
-    assert slug in text, f"Expected suggestion helper to mention '{slug}', but saw '{text}'"
+    link = suggestion.find("a", href=f"/issue/{slug}")
+    assert link is not None, f"Expected suggestion helper to link to '/issue/{slug}'"
+    assert link.text.strip() == slug, f"Expected suggestion link text '{slug}', saw '{link.text.strip()}'"
 
 
 @then('I should see an issue suggestion button for "{slug}"')
@@ -119,9 +120,10 @@ def step_issue_suggestion_button_present(context, slug):
     button = soup.find(id="issue-suggestion-apply")
     assert button is not None, "Expected a suggestion apply button"
     text = button.get_text(strip=True)
-    assert slug in text or slug in button.get(
-        "data-issue", ""
-    ), f"Expected suggestion button to reference '{slug}', but saw '{text}'"
+    assert text == "Use", f"Expected button text 'Use', saw '{text}'"
+    assert (
+        button.get("data-issue", "") == slug
+    ), f"Expected button data-issue '{slug}', saw '{button.get('data-issue', '')}'"
 
 
 @then("the issue field should be blank")

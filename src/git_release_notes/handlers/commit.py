@@ -9,12 +9,10 @@ import fnmatch
 import logging
 import re
 import subprocess
-from pathlib import Path
 from typing import Optional
 
 from tornado.web import HTTPError, RequestHandler
 
-from ..utils.commit_parsing import extract_issue_slugs
 from ..utils.git import (
     find_follows_tag,
     find_precedes_tag,
@@ -22,6 +20,7 @@ from ..utils.git import (
     get_describe_name,
     run_git,
 )
+from ..utils.issue_suggestions import compute_issue_suggestion
 
 logger = logging.getLogger(__name__)
 
@@ -107,34 +106,8 @@ class CommitHandler(RequestHandler):
                 if match:
                     paths.append(match.group(1))
 
-        primary_issue, slugs = extract_issue_slugs(header)
-        existing_issues: list[str] = []
-        directive_matched_issues: list[str] = []
-
-        for slug in slugs:
-            # Open and closed issues
-            for subdir in ("open", "closed"):
-                issue_path = self.repo_path / "issues" / subdir / f"{slug}.md"
-                if issue_path.exists():
-                    existing_issues.append(slug)
-                    directive_matched_issues.append(slug)
-                    break  # Found in either location
-
-        # Add slugs implied by touched issue files
-        touched_issue_slugs: list[str] = []
-        for path in paths:
-            if path.startswith("issues/open/") or path.startswith("issues/closed/"):
-                if path.endswith(".md"):
-                    slug = Path(path).stem
-                    if slug not in slugs:
-                        existing_issues.append(slug)
-                        touched_issue_slugs.append(slug)
-                    elif slug not in directive_matched_issues:
-                        touched_issue_slugs.append(slug)
-
-        # Deduplicate while preserving order
-        seen = set()
-        existing_issues = [slug for slug in existing_issues if not (slug in seen or seen.add(slug))]
+        suggestion_result = compute_issue_suggestion(self.repo_path, header, touched_paths=paths)
+        existing_issues = suggestion_result.existing_issues
 
         if commit_row.get("issue") is None:
             commit_row["issue"] = ""
@@ -143,13 +116,9 @@ class CommitHandler(RequestHandler):
         issue_suggestion = None
         issue_suggestion_source: Optional[str] = None
 
-        if primary_issue and primary_issue in existing_issues:
-            issue_suggestion = primary_issue
-            issue_suggestion_source = "directive"
-
-        if issue_suggestion is None and touched_issue_slugs:
-            issue_suggestion = touched_issue_slugs[0]
-            issue_suggestion_source = "touched"
+        if suggestion_result.suggestion:
+            issue_suggestion = suggestion_result.suggestion
+            issue_suggestion_source = suggestion_result.suggestion_source
 
         issue_prefilled = False
 
