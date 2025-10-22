@@ -103,7 +103,11 @@
             Suggested issue:
             <span class="fw-semibold">{{ issue_suggestion }}</span>
             {% if issue_prefilled %}
+            {% if issue_suggestion_source == "directive" %}
             <span class="text-muted">(prefilled from commit message)</span>
+            {% elif issue_suggestion_source == "touched" %}
+            <span class="text-muted">(prefilled from touched issue file)</span>
+            {% end %}
             {% else %}
             <button
               type="button"
@@ -113,6 +117,9 @@
             >
               Use this suggestion
             </button>
+            {% if issue_suggestion_source == "touched" %}
+            <span class="text-muted">Based on touched issue file</span>
+            {% end %}
             {% end %}
           </div>
           {% end %}

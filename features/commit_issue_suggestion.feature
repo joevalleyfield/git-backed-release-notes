@@ -23,3 +23,11 @@ Feature: Suggest primary issue on commit detail
     When the user visits the commit detail page for "Fixes #missing-issue"
     Then the issue field should be blank
     And no issue suggestion helper should be shown
+
+  Scenario: Suggest issue from touched file when no directive
+    Given the issues directory contains an open issue "touched-suggestion"
+    And the Git repository contains a commit touching issue "touched-suggestion" with message "Update issue doc without directive"
+
+    When the user visits the commit detail page for "Update issue doc without directive"
+    Then the issue field should be prefilled with "touched-suggestion"
+    And the issue suggestion helper should mention "touched-suggestion"

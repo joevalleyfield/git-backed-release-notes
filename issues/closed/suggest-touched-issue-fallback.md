@@ -27,3 +27,6 @@ issue files to suggest a likely primary slug on the commit detail page.
 - Keeps the commit detail page helpful even when commit messages omit directives.
 - Aligns the suggestion panel with the related-issues heuristic we already compute.
 - Reduces manual copy/paste when a commit only touches a single issue file.
+
+## Implementation Notes
+2025-10-22: directive-first with touched-file fallback (change 15ad6b49)

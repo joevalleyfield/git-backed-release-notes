@@ -3,7 +3,7 @@
 import requests
 from behave import given, then, when  # pylint: disable=no-name-in-module
 from bs4 import BeautifulSoup
-from features.support.git_helpers import create_commit
+from features.support.git_helpers import create_commit, create_commit_touching_issue
 from features.support.issue_helpers import create_issue_file, link_commit_to_issue
 from hamcrest import assert_that, contains_string
 
@@ -25,6 +25,11 @@ def step_create_open_issue(context, slug):
 @given('the Git repository contains a commit "{msg}"')
 def step_create_commit_with_message(context, msg):
     context.commit_sha = create_commit(context.repo_path, msg)
+
+
+@given('the Git repository contains a commit touching issue "{slug}" with message "{msg}"')
+def step_create_commit_touching_issue(context, slug, msg):
+    context.commit_sha = create_commit_touching_issue(context.repo_path, slug, msg)
 
 
 @then('the issue file "{slug}.md" should contain "{text}"')

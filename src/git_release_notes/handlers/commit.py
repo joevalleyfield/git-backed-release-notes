@@ -10,6 +10,7 @@ import logging
 import re
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from tornado.web import HTTPError, RequestHandler
 
@@ -108,6 +109,7 @@ class CommitHandler(RequestHandler):
 
         primary_issue, slugs = extract_issue_slugs(header)
         existing_issues: list[str] = []
+        directive_matched_issues: list[str] = []
 
         for slug in slugs:
             # Open and closed issues
@@ -115,15 +117,20 @@ class CommitHandler(RequestHandler):
                 issue_path = self.repo_path / "issues" / subdir / f"{slug}.md"
                 if issue_path.exists():
                     existing_issues.append(slug)
+                    directive_matched_issues.append(slug)
                     break  # Found in either location
 
         # Add slugs implied by touched issue files
+        touched_issue_slugs: list[str] = []
         for path in paths:
             if path.startswith("issues/open/") or path.startswith("issues/closed/"):
                 if path.endswith(".md"):
                     slug = Path(path).stem
                     if slug not in slugs:
                         existing_issues.append(slug)
+                        touched_issue_slugs.append(slug)
+                    elif slug not in directive_matched_issues:
+                        touched_issue_slugs.append(slug)
 
         # Deduplicate while preserving order
         seen = set()
@@ -133,7 +140,17 @@ class CommitHandler(RequestHandler):
             commit_row["issue"] = ""
 
         issue_value = commit_row.get("issue", "")
-        issue_suggestion = primary_issue if primary_issue and primary_issue in existing_issues else None
+        issue_suggestion = None
+        issue_suggestion_source: Optional[str] = None
+
+        if primary_issue and primary_issue in existing_issues:
+            issue_suggestion = primary_issue
+            issue_suggestion_source = "directive"
+
+        if issue_suggestion is None and touched_issue_slugs:
+            issue_suggestion = touched_issue_slugs[0]
+            issue_suggestion_source = "touched"
+
         issue_prefilled = False
 
         if not issue_value and issue_suggestion:
@@ -155,6 +172,7 @@ class CommitHandler(RequestHandler):
             issue_value=issue_value,
             issue_suggestion=issue_suggestion,
             issue_prefilled=issue_prefilled,
+            issue_suggestion_source=issue_suggestion_source,
         )
 
     def tag_matches(self, tag):
