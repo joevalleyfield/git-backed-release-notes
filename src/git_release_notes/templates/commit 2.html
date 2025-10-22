@@ -97,25 +97,7 @@
       <form action="/commit/{{ commit['sha'] }}/update" method="post">
         <div class="mb-3">
           <label for="issue" class="form-label">Issue</label>
-          <input type="text" class="form-control" name="issue" id="issue" value="{{ issue_value }}">
-          {% if issue_suggestion %}
-          <div id="issue-suggestion" class="form-text mt-2">
-            Suggested issue:
-            <span class="fw-semibold">{{ issue_suggestion }}</span>
-            {% if issue_prefilled %}
-            <span class="text-muted">(prefilled from commit message)</span>
-            {% else %}
-            <button
-              type="button"
-              id="issue-suggestion-apply"
-              class="btn btn-link btn-sm ps-1 d-inline"
-              data-issue="{{ issue_suggestion }}"
-            >
-              Use this suggestion
-            </button>
-            {% end %}
-          </div>
-          {% end %}
+          <input type="text" class="form-control" name="issue" id="issue" value="{{ commit['issue'] }}">
         </div>
         <div class="mb-3">
           <label for="release" class="form-label">Release</label>
@@ -123,23 +105,6 @@
         </div>
         <button type="submit" class="btn btn-primary">Update</button>
       </form>
-      {% if issue_suggestion and not issue_prefilled %}
-      <script>
-        (function attachIssueSuggestionButton() {
-          const button = document.getElementById("issue-suggestion-apply");
-          if (!button) return;
-          button.addEventListener("click", () => {
-            const issueField = document.getElementById("issue");
-            if (!issueField) {
-              return;
-            }
-            const value = button.dataset.issue || "{{ issue_suggestion }}";
-            issueField.value = value;
-            issueField.focus();
-          });
-        })();
-      </script>
-      {% end %}
     </section>
 
     <section class="mb-4" aria-labelledby="commit-header-title">

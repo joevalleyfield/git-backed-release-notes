@@ -80,7 +80,10 @@ class CommitHandler(RequestHandler):
 
         store = self.application.settings.get("commit_metadata_store")
 
-        commit_row = store.get_row(sha)
+        commit_row = None
+        if store is not None:
+            store.reload()
+            commit_row = store.get_row(sha)
 
         if commit_row is None:
             commit_row = {"sha": sha, "issue": "", "release": ""}
@@ -104,7 +107,7 @@ class CommitHandler(RequestHandler):
                     paths.append(match.group(1))
 
         primary_issue, slugs = extract_issue_slugs(header)
-        existing_issues = []
+        existing_issues: list[str] = []
 
         for slug in slugs:
             # Open and closed issues
@@ -122,6 +125,21 @@ class CommitHandler(RequestHandler):
                     if slug not in slugs:
                         existing_issues.append(slug)
 
+        # Deduplicate while preserving order
+        seen = set()
+        existing_issues = [slug for slug in existing_issues if not (slug in seen or seen.add(slug))]
+
+        if commit_row.get("issue") is None:
+            commit_row["issue"] = ""
+
+        issue_value = commit_row.get("issue", "")
+        issue_suggestion = primary_issue if primary_issue and primary_issue in existing_issues else None
+        issue_prefilled = False
+
+        if not issue_value and issue_suggestion:
+            issue_value = issue_suggestion
+            issue_prefilled = True
+
         self.render(
             "commit.html",
             sha=sha,
@@ -134,7 +152,9 @@ class CommitHandler(RequestHandler):
             children=children,
             commit=commit_row,
             linked_issues=existing_issues,
-            primary_issue=primary_issue if primary_issue in existing_issues else None,
+            issue_value=issue_value,
+            issue_suggestion=issue_suggestion,
+            issue_prefilled=issue_prefilled,
         )
 
     def tag_matches(self, tag):

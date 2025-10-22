@@ -10,10 +10,10 @@ from hamcrest import assert_that, contains_string
 # pylint: disable=missing-function-docstring
 
 
-@given('the commit is linked to issue "{slug}"')
-def step_link_fixture_commit(context, slug):
+@given('the commit is linked to issue "foo-bar"')
+def step_link_fixture_commit(context):
     sha = context.commit_sha
-    link_commit_to_issue(context.repo_path, sha, slug)
+    link_commit_to_issue(context.repo_path, sha, "foo-bar")
 
 
 @given('the issues directory contains an open issue "{slug}"')
@@ -88,51 +88,6 @@ def step_assert_link_present(context, url):
     soup = BeautifulSoup(context.response.text, "html.parser")
     match = soup.find("a", href=url)
     assert match is not None, f"Expected link to {url} not found"
-
-
-@then('the issue field should be prefilled with "{slug}"')
-def step_issue_field_prefilled(context, slug):
-    soup = BeautifulSoup(context.response.text, "html.parser")
-    issue_input = soup.find("input", attrs={"name": "issue"})
-    assert issue_input is not None, "Expected an input named 'issue' on the page"
-    value = issue_input.get("value", "")
-    assert value == slug, f"Expected issue field to be prefilled with '{slug}', but it was '{value}'"
-
-
-@then('the issue suggestion helper should mention "{slug}"')
-def step_issue_suggestion_helper_mentions(context, slug):
-    soup = BeautifulSoup(context.response.text, "html.parser")
-    suggestion = soup.find(id="issue-suggestion")
-    assert suggestion is not None, "Expected an issue suggestion helper on the page"
-    text = suggestion.get_text(" ", strip=True)
-    assert slug in text, f"Expected suggestion helper to mention '{slug}', but saw '{text}'"
-
-
-@then('I should see an issue suggestion button for "{slug}"')
-def step_issue_suggestion_button_present(context, slug):
-    soup = BeautifulSoup(context.response.text, "html.parser")
-    button = soup.find(id="issue-suggestion-apply")
-    assert button is not None, "Expected a suggestion apply button"
-    text = button.get_text(strip=True)
-    assert slug in text or slug in button.get(
-        "data-issue", ""
-    ), f"Expected suggestion button to reference '{slug}', but saw '{text}'"
-
-
-@then("the issue field should be blank")
-def step_issue_field_blank(context):
-    soup = BeautifulSoup(context.response.text, "html.parser")
-    issue_input = soup.find("input", attrs={"name": "issue"})
-    assert issue_input is not None, "Expected an input named 'issue' on the page"
-    value = issue_input.get("value", "")
-    assert value == "", f"Expected issue field to be blank, but it was '{value}'"
-
-
-@then("no issue suggestion helper should be shown")
-def step_no_issue_suggestion_helper(context):
-    soup = BeautifulSoup(context.response.text, "html.parser")
-    suggestion = soup.find(id="issue-suggestion")
-    assert suggestion is None, "Did not expect an issue suggestion helper to be shown"
 
 
 @when('the user updates the issue content to include "{text}"')
