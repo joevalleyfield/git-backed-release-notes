@@ -21,3 +21,6 @@ open
 ## Tags
 spiked, needs-tests
 
+## Notes
+- 2025-10-22: Added unit coverage for `DataFrameCommitMetadataStore` and `SpreadsheetCommitMetadataStore` (`shas_for_issue`, `reload`) in `tests/unit/test_metadata_store.py`.
+- Still missing a Behave scenario that visits `/issue/<slug>` while the app runs in `@with_xlsx` mode to prove spreadsheet-backed issue views work end-to-end.
