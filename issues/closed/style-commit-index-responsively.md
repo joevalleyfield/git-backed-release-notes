@@ -3,7 +3,7 @@
 ---
 
 - tags: [ui, responsive, table, cards, density] 
-- status: open 
+- status: closed 
 - planned-release: rel-0.7
 
 ---
@@ -33,3 +33,6 @@ Make the commit index usable across widths: dense, fixed-width columns on deskto
 
 - Breakpoint uses **rem** to scale with base font size.
 - Future: replace inputs with “flat” read view that swaps to input on focus/edit.
+
+## Postscript
+2025-10-29: Added viewport meta tag so the mobile layout breakpoint triggers correctly (change tkwywtlq).
