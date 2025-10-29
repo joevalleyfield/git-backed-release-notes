@@ -36,5 +36,14 @@ As a result:
 * Editing issue/release via UI updates the index without requiring a server restart.
 * Feature tests confirm both spreadsheet slugs render initially and that edits are reflected.
 
+## Findings
+
+* Git commit `9944df6ca467` (“fix: make index page reflect updates in spreadsheet mode.”) removed the cached `df` from `MainHandler` and now rebuilds rows from `commit_metadata_store.get_metadata_df()` on every request, so inline edits show up immediately.
+* `CommitMetadataStore` gained `get_metadata_df()` and `limits_commit_set()` so both spreadsheet- and CSV-backed stores surface fresh data to the handler.
+* Behave coverage already exercises the index edit flow and asserts the updated slug is present in the HTML response, keeping this regression locked down.
+
+## Postscript
+2025-10-29: Verified the spreadsheet mode refresh via commit `9944df6ca467`; no additional work required.
+
 ## Tags
 needs-testing
