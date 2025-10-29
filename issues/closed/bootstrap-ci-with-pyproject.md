@@ -83,3 +83,7 @@
     - 2025-10-10: Spun off Phase E linting/quality issue to stage stricter static analysis and contributor tooling.
     - 2025-10-10 08:38: Phase E linting track underway—Ruff enforced with import sorting, Bugbear, and comprehension rules; ci-local exits on lint failures.
     - 2025-10-10 08:45: Added Black formatting baseline (110 col), MyPy checks for `utils`, and pre-commit hooks/CI guard covering lint + format + types.
+    - 2025-10-29: Triaged follow-up scope—baseline CI bootstrap, lockfiles, and SBOM hooks are live; Phase E lint/type depth now tracks in `phase-e-expand-coverage.md` and `phase-e-mypy-expand.md`.
+
+    ## Postscript
+    2025-10-29: CI bootstrap roadmap delivered; promotional tasks continue via Phase E issues.
