@@ -6,12 +6,14 @@ and passes it to the template for interactive browsing.
 """
 
 import logging
+import math
 
 from tornado.web import RequestHandler
 
 from ..utils.git import extract_commits_from_git, run_git
 from ..utils.issue_suggestions import compute_issue_suggestion
 from ..utils.metadata_store import CommitMetadataStore
+from ..utils.release_suggestions import compute_release_suggestion
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,8 @@ class MainHandler(RequestHandler):
                 row["release"] = meta.get("release", "")
                 rows.append(row)
 
+        tag_pattern = self.application.settings.get("tag_pattern", "rel-*")
+
         for row in rows:
             touched_paths = row.get("touched_paths")
             if touched_paths is None:
@@ -82,6 +86,33 @@ class MainHandler(RequestHandler):
                 suggestion_value = None
             row["issue_suggestion"] = suggestion_value
             row["issue_suggestion_source"] = suggestion.suggestion_source if suggestion_value else None
+
+            raw_release = row.get("release", "")
+            if isinstance(raw_release, str):
+                release_value = raw_release.strip()
+            elif raw_release is None:
+                release_value = ""
+            elif isinstance(raw_release, float):
+                release_value = "" if math.isnan(raw_release) else str(raw_release)
+            else:
+                release_value = str(raw_release)
+            row["release"] = release_value
+
+            release_suggestion = compute_release_suggestion(
+                self.repo_path,
+                row["sha"],
+                current_release=release_value,
+                tag_pattern=tag_pattern,
+            )
+            if release_suggestion.suggestion:
+                row["release_suggestion"] = release_suggestion.suggestion
+                source = release_suggestion.suggestion_source
+                row["release_suggestion_source"] = source
+                row["release_suggestion_label"] = source.title() if source else None
+            else:
+                row["release_suggestion"] = None
+                row["release_suggestion_source"] = None
+                row["release_suggestion_label"] = None
 
         self.render("index.html", rows=rows)
 

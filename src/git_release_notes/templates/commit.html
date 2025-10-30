@@ -116,7 +116,26 @@
         </div>
         <div class="mb-3">
           <label for="release" class="form-label">Release</label>
-          <input type="text" class="form-control" name="release" id="release" value="{{ commit['release'] }}">
+          <input type="text" class="form-control" name="release" id="release" value="{{ release_value }}">
+          {% if release_suggestion %}
+          <div id="release-suggestion" class="form-text mt-2 d-flex flex-wrap gap-2 align-items-center">
+            <button
+              type="button"
+              id="release-suggestion-apply"
+              class="btn btn-link btn-sm p-0"
+              data-release="{{ release_suggestion }}"
+              {% if release_suggestion_source %}
+              data-source="{{ release_suggestion_source }}"
+              {% end %}
+            >
+              Use
+            </button>
+            {% if release_suggestion_label %}
+            <span class="badge text-bg-secondary release-suggestion-source">{{ release_suggestion_label }}</span>
+            {% end %}
+            <span class="release-suggestion-value">{{ release_suggestion }}</span>
+          </div>
+          {% end %}
         </div>
         <button type="submit" class="btn btn-primary">Update</button>
       </form>
@@ -133,6 +152,23 @@
             const value = button.dataset.issue || "{{ issue_suggestion }}";
             issueField.value = value;
             issueField.focus();
+          });
+        })();
+      </script>
+      {% end %}
+      {% if release_suggestion %}
+      <script>
+        (function attachReleaseSuggestionButton() {
+          const button = document.getElementById("release-suggestion-apply");
+          if (!button) return;
+          button.addEventListener("click", () => {
+            const releaseField = document.getElementById("release");
+            if (!releaseField) {
+              return;
+            }
+            const value = button.dataset.release || "{{ release_suggestion }}";
+            releaseField.value = value;
+            releaseField.focus();
           });
         })();
       </script>

@@ -187,6 +187,24 @@
                 {% if row.get("release") %}
                   <a href="/release/{{ row['release'] }}">🔗</a>
                 {% end %}
+                {% if row.get("release_suggestion") %}
+                <div class="form-text release-suggestion-hint mt-1 d-flex flex-wrap gap-2 align-items-center" data-test="release-suggestion">
+                  <button
+                    type="button"
+                    class="btn btn-link btn-sm p-0 release-suggestion-apply"
+                    data-release="{{ row['release_suggestion'] }}"
+                    {% if row.get("release_suggestion_source") %}
+                    data-source="{{ row['release_suggestion_source'] }}"
+                    {% end %}
+                  >
+                    Use
+                  </button>
+                  {% if row.get("release_suggestion_label") %}
+                  <span class="badge text-bg-secondary release-suggestion-source">{{ row["release_suggestion_label"] }}</span>
+                  {% end %}
+                  <span class="release-suggestion-value">{{ row["release_suggestion"] }}</span>
+                </div>
+                {% end %}
               </td>
 
               <td data-label="date">{{ row["author_date"] }}</td>
@@ -298,6 +316,22 @@
             return;
           }
           const suggestion = button.dataset.issue || "";
+          if (input.value !== suggestion) {
+            input.value = suggestion;
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+          input.focus();
+        });
+      });
+
+      document.querySelectorAll(".release-suggestion-apply").forEach(button => {
+        button.addEventListener("click", () => {
+          const cell = button.closest("td");
+          const input = cell?.querySelector('input[name="release"]');
+          if (!input) {
+            return;
+          }
+          const suggestion = button.dataset.release || "";
           if (input.value !== suggestion) {
             input.value = suggestion;
             input.dispatchEvent(new Event("input", { bubbles: true }));

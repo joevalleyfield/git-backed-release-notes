@@ -142,6 +142,37 @@ def step_no_issue_suggestion_helper(context):
     assert suggestion is None, "Did not expect an issue suggestion helper to be shown"
 
 
+@then("the release field should be blank")
+def step_release_field_blank(context):
+    soup = BeautifulSoup(context.response.text, "html.parser")
+    release_input = soup.find("input", attrs={"name": "release"})
+    assert release_input is not None, "Expected an input named 'release' on the page"
+    value = release_input.get("value", "")
+    assert value == "", f"Expected release field to be blank, but it was '{value}'"
+
+
+@then('I should see a release suggestion button for "{tag}" from source "{source}"')
+def step_release_suggestion_button_present(context, tag, source):
+    soup = BeautifulSoup(context.response.text, "html.parser")
+    container = soup.find(id="release-suggestion")
+    assert container is not None, "Expected a release suggestion helper on the page"
+
+    button = container.find("button", id="release-suggestion-apply")
+    assert button is not None, "Expected a release suggestion apply button"
+    assert button.get_text(strip=True) == "Use", "Expected release suggestion button label 'Use'"
+    assert (
+        button.get("data-release", "") == tag
+    ), f"Expected button data-release '{tag}', saw '{button.get('data-release', '')}'"
+
+    badge = container.find(class_="release-suggestion-source")
+    assert badge is not None, "Expected a source badge in the release suggestion"
+    assert badge.get_text(strip=True) == source, f"Expected source badge '{source}'"
+
+    value_span = container.find(class_="release-suggestion-value")
+    assert value_span is not None, "Expected a span with the release suggestion value"
+    assert value_span.get_text(strip=True) == tag, f"Expected release suggestion value '{tag}'"
+
+
 @when('the user updates the issue content to include "{text}"')
 def step_prepare_issue_edit(context, text):
     slug = context.issue_slug

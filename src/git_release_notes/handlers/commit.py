@@ -7,6 +7,7 @@ commit using `git describe`, `rev-list`, and `merge-base`.
 
 import fnmatch
 import logging
+import math
 import re
 import subprocess
 from typing import Optional
@@ -21,6 +22,7 @@ from ..utils.git import (
     run_git,
 )
 from ..utils.issue_suggestions import compute_issue_suggestion
+from ..utils.release_suggestions import compute_release_suggestion
 
 logger = logging.getLogger(__name__)
 
@@ -109,10 +111,16 @@ class CommitHandler(RequestHandler):
         suggestion_result = compute_issue_suggestion(self.repo_path, header, touched_paths=paths)
         existing_issues = suggestion_result.existing_issues
 
-        if commit_row.get("issue") is None:
-            commit_row["issue"] = ""
-
-        issue_value = commit_row.get("issue", "")
+        raw_issue = commit_row.get("issue", "")
+        if isinstance(raw_issue, str):
+            issue_value = raw_issue
+        elif raw_issue is None:
+            issue_value = ""
+        elif isinstance(raw_issue, float) and math.isnan(raw_issue):
+            issue_value = ""
+        else:
+            issue_value = str(raw_issue)
+        commit_row["issue"] = issue_value
         issue_suggestion = None
         issue_suggestion_source: Optional[str] = None
 
@@ -125,6 +133,28 @@ class CommitHandler(RequestHandler):
         if not issue_value and issue_suggestion:
             issue_value = issue_suggestion
             issue_prefilled = True
+
+        raw_release = commit_row.get("release", "")
+        if isinstance(raw_release, str):
+            release_value = raw_release.strip()
+        elif raw_release is None:
+            release_value = ""
+        elif isinstance(raw_release, float):
+            release_value = "" if math.isnan(raw_release) else str(raw_release)
+        else:
+            release_value = str(raw_release)
+        commit_row["release"] = release_value
+
+        release_result = compute_release_suggestion(
+            self.repo_path,
+            sha,
+            current_release=release_value,
+            precedes=precedes,
+            tag_pattern=self.application.settings["tag_pattern"],
+        )
+        release_suggestion = release_result.suggestion
+        release_suggestion_source = release_result.suggestion_source
+        release_suggestion_label = release_suggestion_source.title() if release_suggestion_source else None
 
         self.render(
             "commit.html",
@@ -142,6 +172,10 @@ class CommitHandler(RequestHandler):
             issue_suggestion=issue_suggestion,
             issue_prefilled=issue_prefilled,
             issue_suggestion_source=issue_suggestion_source,
+            release_value=release_value,
+            release_suggestion=release_suggestion,
+            release_suggestion_source=release_suggestion_source,
+            release_suggestion_label=release_suggestion_label,
         )
 
     def tag_matches(self, tag):
