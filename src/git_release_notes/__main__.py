@@ -5,9 +5,12 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import signal
 import time
 import webbrowser
 from pathlib import Path
+from types import FrameType
+from typing import Iterable
 
 import pandas as pd
 from tornado.ioloop import IOLoop
@@ -35,6 +38,33 @@ def _should_use_local_assets(env_value: str | None) -> bool:
         return False
 
     return env_value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _install_signal_handlers(
+    loop: IOLoop, *, signals_to_handle: Iterable[int] | None = None
+) -> None:
+    """Arrange for the given loop to stop when termination signals arrive."""
+
+    if signals_to_handle is None:
+        candidate_signals = (signal.SIGINT, getattr(signal, "SIGTERM", None))
+        signals_to_handle = tuple(sig for sig in candidate_signals if sig is not None)
+
+    def _handle_signal(signum: int, _frame: FrameType | None) -> None:
+        logger.info("Received signal %s; shutting down", signum)
+        loop.add_callback_from_signal(loop.stop)
+
+    for signum in signals_to_handle:
+        signal.signal(signum, _handle_signal)
+
+
+def _start_ioloop(loop: IOLoop) -> None:
+    """Start the loop and ensure KeyboardInterrupt stops it cleanly."""
+
+    try:
+        loop.start()
+    except KeyboardInterrupt:
+        logger.info("Stopping Tornado IOLoop on Ctrl+C")
+        loop.stop()
 
 
 def make_app(
@@ -132,7 +162,9 @@ def main() -> None:
         time.sleep(0.25)
         webbrowser.open(url)
 
-    IOLoop.current().start()
+    loop = IOLoop.current()
+    _install_signal_handlers(loop)
+    _start_ioloop(loop)
 
 
 if __name__ == "__main__":
