@@ -19,6 +19,7 @@ from tornado.web import Application
 from .handlers.commit import CommitHandler, CommitResolveHandler
 from .handlers.debug import GitStatsHandler
 from .handlers.issue import IssueDetailHandler, IssueUpdateHandler
+from .handlers.issue_index import IssueIndexHandler
 from .handlers.main import MainHandler
 from .handlers.update import UpdateCommitHandler
 from .utils.metadata_store import (
@@ -94,6 +95,7 @@ def make_app(
             (r"/commit/([a-f0-9]{40})/update", UpdateCommitHandler),
             (r"/commit/([a-f0-9]{40})", CommitHandler),
             (r"/commit/([^/]+)", CommitResolveHandler),
+            (r"/issues", IssueIndexHandler),
             (r"/issue/([^/]+)/update", IssueUpdateHandler),
             (r"/issue/([^/]+)", IssueDetailHandler),
             (r"/_debug/git-stats", GitStatsHandler),
@@ -157,6 +159,8 @@ def main() -> None:
     app.listen(args.port)
     url = f"http://localhost:{args.port}"
     print(f"Server running at {url}", flush=True)
+    print(f"  Commit index: {url}/", flush=True)
+    print(f"  Issue index: {url}/issues", flush=True)
 
     if not args.no_browser:
         time.sleep(0.25)

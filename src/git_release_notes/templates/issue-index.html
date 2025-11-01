@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Issues</title>
+  {% set use_local_assets = handler.settings.get("use_local_assets") %}
+  {% if use_local_assets %}
+  <link rel="stylesheet" href="{{ static_url('vendor/bootstrap-5.3.7.min.css') }}">
+  <script src="{{ static_url('vendor/bootstrap-5.3.7.bundle.min.js') }}"></script>
+  {% else %}
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+    integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr sha384-fhoKacxXiUKwMGMcI8QlD1sG38/zqnIgQmAQr0Nu+cv25q8Q348nzcZEzXm0/gau"
+    crossorigin="anonymous"
+  >
+  <link rel="stylesheet" href="{{ static_url('vendor/bootstrap-5.3.7.min.css') }}">
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q sha384-H+d/9ZcoyMusVG6bhHlOvRrcmhyEoGxj4f5Vt209iGhHV828YDm+Mk6/36f2JYWM"
+    crossorigin="anonymous"
+  ></script>
+  <script>
+    if (typeof bootstrap === "undefined") {
+      document.write('<script src="{{ static_url("vendor/bootstrap-5.3.7.bundle.min.js") }}"><\\/script>');
+    }
+  </script>
+  {% end %}
+  <style>
+    .issue-filters .btn.active {
+      pointer-events: none;
+    }
+
+    .issue-table {
+      table-layout: fixed;
+    }
+
+    .issue-table th.col-issue,
+    .issue-table td[data-label="issue"] {
+      width: 24rem;
+    }
+
+    .issue-table th.col-status,
+    .issue-table td[data-label="status"] {
+      width: 8rem;
+    }
+
+    .issue-table th.col-release,
+    .issue-table td[data-label="release"] {
+      width: 12rem;
+    }
+
+    .issue-table th.col-updated,
+    .issue-table td[data-label="last-updated"],
+    .issue-table th.col-landed,
+    .issue-table td[data-label="landed-at"] {
+      width: 12rem;
+    }
+
+    @media (max-width: 60rem) {
+      .issue-table thead {
+        display: none;
+      }
+      .issue-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 0.25rem;
+        padding: 0.75rem;
+      }
+      .issue-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.25rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container py-4">
+    <header class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-4">
+      <div>
+        <h1 class="h4 mb-2">Issue Index</h1>
+        <p class="text-muted mb-0">Scan open and closed issues by recency or landing history.</p>
+      </div>
+      <nav class="d-flex flex-wrap gap-2 align-items-center">
+        <a class="btn btn-outline-secondary btn-sm" href="/" data-test="issues-commit-index-link">Commit index</a>
+      </nav>
+      <div class="issue-filters d-flex gap-2 flex-wrap">
+        <div class="btn-group" role="group" aria-label="Sort issues">
+          {% for option in sort_options %}
+          <a
+            class="btn btn-outline-primary {% if option['active'] %}active{% end %}"
+            href="{{ option['url'] }}"
+            data-test="issues-sort-option"
+          >
+            {{ option["label"] }}
+          </a>
+          {% end %}
+        </div>
+        <div class="btn-group" role="group" aria-label="Filter by release">
+          {% for option in release_options %}
+          <a
+            class="btn btn-outline-secondary {% if option['active'] %}active{% end %}"
+            href="{{ option['url'] }}"
+            data-test="issues-release-filter"
+          >
+            {{ option["label"] }}
+          </a>
+          {% end %}
+        </div>
+      </div>
+    </header>
+
+    <section aria-labelledby="issue-table-heading">
+      <h2 id="issue-table-heading" class="visually-hidden">Issue list</h2>
+      <table class="table table-striped table-hover align-middle issue-table">
+        <thead class="table-light">
+          <tr>
+            <th class="col-issue">Issue</th>
+            <th class="col-status">Status</th>
+            <th class="col-release">Release</th>
+            <th class="col-updated">Last Updated</th>
+            <th class="col-landed">Last Landed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr data-test="issue-row" data-slug="{{ row.slug }}">
+            <td data-label="issue">
+              <div class="d-flex flex-column gap-1">
+                <div>
+                  <a href="{{ row.issue_url }}" class="fw-semibold">{{ row.slug }}</a>
+                </div>
+              </div>
+            </td>
+            <td data-label="status">
+              <span class="badge {{ row.status_badge }} text-uppercase" data-test="issue-status">{{ row.status }}</span>
+            </td>
+            <td data-label="release">
+              {% if row.release %}
+                <span data-test="issue-release">{{ row.release }}</span>
+              {% else %}
+                <span class="text-muted" data-test="issue-release">&mdash;</span>
+              {% end %}
+            </td>
+            <td data-label="last-updated" data-test="issue-last-updated">{{ row.last_updated }}</td>
+            <td data-label="landed-at" data-test="issue-landed-at">
+              {% if row.landed_at %}
+                {{ row.landed_at }}
+              {% else %}
+                <span class="text-muted">&mdash;</span>
+              {% end %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">No issues match the selected filters.</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

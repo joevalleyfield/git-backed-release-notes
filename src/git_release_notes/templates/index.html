@@ -9,16 +9,18 @@
   <link rel="stylesheet" href="{{ static_url('vendor/bootstrap-5.3.7.min.css') }}">
   <script src="{{ static_url('vendor/bootstrap-5.3.7.bundle.min.js') }}"></script>
   {% else %}
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
-    integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr"
+    integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr sha384-fhoKacxXiUKwMGMcI8QlD1sG38/zqnIgQmAQr0Nu+cv25q8Q348nzcZEzXm0/gau"
     crossorigin="anonymous"
   >
   <link rel="stylesheet" href="{{ static_url('vendor/bootstrap-5.3.7.min.css') }}">
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+    integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q sha384-H+d/9ZcoyMusVG6bhHlOvRrcmhyEoGxj4f5Vt209iGhHV828YDm+Mk6/36f2JYWM"
     crossorigin="anonymous"
   ></script>
   <script>
@@ -138,6 +140,9 @@
   <main class="container py-4">
     <header class="mb-4">
       <h1 class="h4">Commit Index</h1>
+      <nav class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="/issues">Browse issues</a>
+      </nav>
     </header>
 
     <section aria-labelledby="commit-table-heading">

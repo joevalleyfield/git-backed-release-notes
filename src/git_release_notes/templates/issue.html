@@ -86,6 +86,7 @@
     <header class="mb-4">
       <h1 class="h4">Issue: {{ slug }}</h1>
       <p><strong>Status:</strong> {{ status }}</p>
+      <a class="btn btn-outline-secondary btn-sm" href="/issues">Back to issue index</a>
     </header>
 
     <form action="/issue/{{ slug }}/update" method="post" class="mb-4">

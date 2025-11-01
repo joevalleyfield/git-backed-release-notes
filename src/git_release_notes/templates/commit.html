@@ -89,7 +89,10 @@
         </nav>
       {% end %}
       
-      <a id="back-link" class="btn btn-outline-secondary" href="/#sha-{{ sha[:7] }}">← Back to index</a>
+      <div class="d-flex flex-wrap gap-2">
+        <a id="back-link" class="btn btn-outline-secondary" href="/#sha-{{ sha[:7] }}">← Back to index</a>
+        <a class="btn btn-outline-secondary" href="/issues">Browse issues</a>
+      </div>
     </header>
 
     <section class="mb-4" aria-labelledby="commit-form-title">

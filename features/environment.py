@@ -130,15 +130,24 @@ class ServerFarm:
     def get(self, mode: str) -> ServerProcess:
         """Get or launch a server for the given mode."""
         if mode not in self.servers:
-            port = self._next_port()
-            use_xlsx = mode == "xlsx"
-            server = ServerProcess.launch(
-                self.xlsx_path if use_xlsx else None,
-                self.repo_path,
-                port=port,
-            )
-            server.mode = mode
-            self.servers[mode] = server
+            attempts = 0
+            while True:
+                attempts += 1
+                port = self._next_port()
+                use_xlsx = mode == "xlsx"
+                try:
+                    server = ServerProcess.launch(
+                        self.xlsx_path if use_xlsx else None,
+                        self.repo_path,
+                        port=port,
+                    )
+                    server.mode = mode
+                    self.servers[mode] = server
+                    break
+                except RuntimeError as exc:
+                    if "Address already in use" in str(exc) and attempts < 5:
+                        continue
+                    raise
         return self.servers[mode]
 
     def shutdown_all(self):

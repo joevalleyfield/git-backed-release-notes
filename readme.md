@@ -5,6 +5,7 @@ This is a minimal Tornado-based web viewer for navigating and annotating the com
 ## ✨ Features
 
 * Loads commit metadata from an Excel `.xlsx` file (one row per commit)
+* Provides both a commit index and an issue index for browsing history
 * Displays an interactive HTML table of commits, including:
   * Commit SHA (linked to detailed view)
   * Message, release labels, issue slugs, author date, and more
@@ -36,7 +37,7 @@ After installation (e.g. `pip install .`), you can also use the console entry:
 git-release-notes --repo path/to/repo
 ```
 
-Then open [http://localhost:8000](http://localhost:8000) in your browser.
+Then open [http://localhost:8000](http://localhost:8000) in your browser. The home page lists commits; [/issues](http://localhost:8000/issues) lists the issue index.
 
 You can omit `--excel-path` to run in read-only mode with Git metadata only:
 
@@ -44,9 +45,9 @@ You can omit `--excel-path` to run in read-only mode with Git metadata only:
 python -m git_release_notes --repo path/to/repo
 ```
 
-### Metadata and Issue Content
+### Metadata, Issue Content, and Browsing Modes
 
-The per-commit page allows editing the `issue` and `release` fields.
+The commit index and issue index draw from the same metadata sources and issue Markdown files.
 Edits are applied to the in-memory model and saved back to disk.
 Conflicts (e.g. missing spreadsheet or unknown commit) result in clear error messages.
 
@@ -61,6 +62,7 @@ This app supports two modes for metadata storage:
    - Commit metadata is stored in a CSV file generated on disk
    - Issue files (`issues/{open,closed}/*.md`) are used to display and edit issue content
    - Each commit’s `issue` field links to a corresponding Markdown file if present
+   - The issue index surfaces both open and closed issues with release grouping and landing timestamps
 
 ### 🔍 Debug Logging
 
