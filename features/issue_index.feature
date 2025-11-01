@@ -47,3 +47,10 @@ Feature: Issue-centric browsing index
     When the user visits the issue index
     Then the header should link to the commit index
     And issue rows should not include commit navigation links
+
+  Scenario: Last Landed derives from inferred commits
+    Given landing data is cleared for issue "closed-add-breadcrumbs"
+    And metadata links are cleared for issue "closed-add-breadcrumbs"
+    And a commit touching issue "closed-add-breadcrumbs" landed at "2024-03-05T15:45:00+00:00"
+    When the user visits the issue index
+    Then issue "closed-add-breadcrumbs" should show last landed "2024-03-05 15:45"

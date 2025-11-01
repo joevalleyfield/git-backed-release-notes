@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import csv
 from datetime import datetime, timezone
 from typing import Iterable
 
 import requests
 from behave import given, then, when  # pylint: disable=no-name-in-module
 from bs4 import BeautifulSoup
+from features.support.git_helpers import create_timestamped_commit_touching_issue
 
 from tests.helpers.issue_index_fixtures import (
     ISSUE_INDEX_FIXTURE,
@@ -76,6 +78,60 @@ def step_populate_commit_fixtures(context):
         context.repo_path,
         landing_map,
         commit_ids=commit_ids,
+    )
+
+
+@given('landing data is cleared for issue "{slug}"')
+def step_clear_landing_data(context, slug):
+    path = context.repo_path / "commits.csv"
+    if not path.exists():
+        return
+
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        rows = [row for row in reader if row.get("issue") != slug]
+
+    if not rows:
+        path.write_text("sha,summary,issue,landed_at\n", encoding="utf-8")
+        return
+
+    fieldnames = ["sha", "summary", "issue", "landed_at"]
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+@given('metadata links are cleared for issue "{slug}"')
+def step_clear_metadata_links(context, slug):
+    path = context.repo_path / "git-view.metadata.csv"
+    if not path.exists():
+        return
+
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        rows = list(reader)
+        if not rows:
+            return
+
+    fieldnames = reader.fieldnames or ["sha", "issue", "release"]
+    for row in rows:
+        if row.get("issue") == slug:
+            row["issue"] = ""
+
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+@given('a commit touching issue "{slug}" landed at "{iso_timestamp}"')
+def step_create_timestamped_commit(context, slug, iso_timestamp):
+    create_timestamped_commit_touching_issue(
+        context.repo_path,
+        slug,
+        f"Touch {slug}",
+        iso_timestamp,
     )
 
 
@@ -164,3 +220,18 @@ def step_assert_issue_rows_no_commit_links(context):
         slug = row.get("data-slug")
         link = row.select_one("a[data-test='issue-commit-link']")
         assert link is None, f"Did not expect commit navigation link in row for {slug}"
+
+
+@then('issue "{slug}" should show last landed "{expected}"')
+def step_assert_last_landed(context, slug, expected):
+    rows = _current_issue_rows(context)
+    for row in rows:
+        if row.get("data-slug") == slug:
+            cell = row.select_one("[data-test='issue-landed-at']")
+            assert cell is not None, f"No landed-at cell found for issue {slug}"
+            text = cell.get_text(strip=True)
+            assert (
+                text == expected
+            ), f"Expected issue {slug} to show '{expected}' in Last Landed, saw '{text}'"
+            return
+    raise AssertionError(f"Issue row for {slug} not found in rendered issue index")

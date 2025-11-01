@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 
@@ -26,7 +27,7 @@ def create_commit(repo_path: Path, message: str) -> str:
     ).stdout.strip()
 
 
-def create_commit_touching_issue(repo_path: Path, slug: str, message: str) -> str:
+def create_commit_touching_issue(repo_path: Path, slug: str, message: str, *, env: dict | None = None) -> str:
     """
     Create a commit that touches an issue Markdown file and return its SHA.
 
@@ -48,14 +49,15 @@ def create_commit_touching_issue(repo_path: Path, slug: str, message: str) -> st
             f.write("\n<!-- created by test commit -->\n")
 
     rel_path = issue_path.relative_to(repo_path)
-    subprocess.run(["git", "add", str(rel_path)], cwd=repo_path, check=True)
-    subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True)
+    subprocess.run(["git", "add", str(rel_path)], cwd=repo_path, check=True, env=env)
+    subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True, env=env)
     return subprocess.run(
         ["git", "rev-parse", "HEAD"],
         cwd=repo_path,
         capture_output=True,
         text=True,
         check=True,
+        env=env,
     ).stdout.strip()
 
 
@@ -63,3 +65,14 @@ def tag_commit(repo_path: Path, sha: str, tag_name: str) -> None:
     """Create a lightweight tag pointing to the specified commit SHA."""
 
     subprocess.run(["git", "tag", tag_name, sha], cwd=repo_path, check=True)
+
+
+def create_timestamped_commit_touching_issue(
+    repo_path: Path, slug: str, message: str, iso_timestamp: str
+) -> str:
+    """Create a commit that touches an issue file with a fixed author/committer timestamp."""
+
+    env = os.environ.copy()
+    env["GIT_AUTHOR_DATE"] = iso_timestamp
+    env["GIT_COMMITTER_DATE"] = iso_timestamp
+    return create_commit_touching_issue(repo_path, slug, message, env=env)

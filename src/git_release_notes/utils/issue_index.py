@@ -11,10 +11,13 @@ import csv
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Iterable, Sequence
 
-from .git import run_git
+from .git import extract_commits_from_git, run_git
+from .issues import find_commits_referring_to_issue
 from .metadata_store import CommitMetadataStore
 
 logger = logging.getLogger(__name__)
@@ -155,6 +158,80 @@ def _load_commit_landings(repo_root: Path) -> tuple[dict[str, datetime], dict[st
     return landing_map, sha_map
 
 
+@lru_cache(maxsize=1024)
+def _resolve_commit_author_timestamp(repo_root: str, sha: str) -> datetime | None:
+    root_path = Path(repo_root)
+    if not (root_path / ".git").exists():
+        return None
+
+    try:
+        result = run_git(repo_root, "show", "-s", "--format=%aI", sha, check=True)
+    except Exception as exc:  # pragma: no cover - defensive path
+        logger.debug("Failed to resolve author timestamp for %s: %s", sha, exc)
+        return None
+
+    timestamp = result.stdout.strip()
+    if not timestamp:
+        return None
+    return _parse_timestamp(timestamp)
+
+
+def _latest_commit_timestamp(repo_root: Path, shas: Iterable[str]) -> datetime | None:
+    latest: datetime | None = None
+    repo_key = str(repo_root)
+    for sha in shas:
+        sha = sha.strip()
+        if not sha:
+            continue
+        authored_at = _resolve_commit_author_timestamp(repo_key, sha)
+        if authored_at is None:
+            continue
+        if latest is None or authored_at > latest:
+            latest = authored_at
+    return latest
+
+
+def _scan_repo_commits(repo_root: Path) -> list[SimpleNamespace]:
+    commits = extract_commits_from_git(str(repo_root))
+    return [SimpleNamespace(**row) for row in commits]
+
+
+def _infer_issue_commits(
+    slug: str,
+    repo_root: Path,
+    store: CommitMetadataStore,
+    scanned_commits: list[SimpleNamespace],
+) -> tuple[set[str], datetime | None, bool]:
+    inferred_shas: set[str] = set()
+    newest_timestamp: datetime | None = None
+    metadata_updated = False
+
+    for commit in find_commits_referring_to_issue(slug, scanned_commits):
+        sha = getattr(commit, "sha", "").strip()
+        if not sha:
+            continue
+
+        inferred_shas.add(sha)
+
+        authored_at = _parse_timestamp(getattr(commit, "author_date", ""))
+        if authored_at is not None and (newest_timestamp is None or authored_at > newest_timestamp):
+            newest_timestamp = authored_at
+
+        existing = store.get_row(sha)
+        existing_issue = ""
+        if existing is not None:
+            existing_issue = str(existing.get("issue") or "").strip()
+
+        if existing_issue and existing_issue not in {slug, ""}:
+            continue
+
+        if existing_issue != slug:
+            store.set_issue(sha, slug)
+            metadata_updated = True
+
+    return inferred_shas, newest_timestamp, metadata_updated
+
+
 @dataclass(frozen=True, slots=True)
 class IssueIndexRow:
     slug: str
@@ -177,6 +254,8 @@ def collect_issue_index_rows(
     metadata_df = store.get_metadata_df()
     release_map = _load_release_map(metadata_df)
     landing_map, commit_sha_map = _load_commit_landings(repo_root)
+    scanned_commits: list[SimpleNamespace] | None = None
+    metadata_mutated = False
 
     rows: list[IssueIndexRow] = []
     for path in _collect_issue_files(issues_root):
@@ -203,6 +282,27 @@ def collect_issue_index_rows(
             matches = metadata_df[metadata_df["issue"] == slug]
             commit_shas.update(str(sha).strip() for sha in matches["sha"] if str(sha).strip())
 
+        inferred_timestamp: datetime | None = None
+        if not commit_shas:
+            if scanned_commits is None:
+                scanned_commits = _scan_repo_commits(repo_root)
+            inferred_shas, newest_ts, updated = _infer_issue_commits(
+                slug, repo_root, store, scanned_commits
+            )
+            if inferred_shas:
+                commit_shas.update(inferred_shas)
+                inferred_timestamp = newest_ts
+            if updated:
+                metadata_mutated = True
+
+        fallback_landed_at = _latest_commit_timestamp(repo_root, commit_shas)
+        if fallback_landed_at is not None:
+            if landed_at is None or fallback_landed_at > landed_at:
+                landed_at = fallback_landed_at
+        elif inferred_timestamp is not None:
+            if landed_at is None or inferred_timestamp > landed_at:
+                landed_at = inferred_timestamp
+
         rows.append(
             IssueIndexRow(
                 slug=slug,
@@ -213,6 +313,12 @@ def collect_issue_index_rows(
                 commit_shas=tuple(sorted(commit_shas)),
             )
         )
+
+    if metadata_mutated:
+        try:
+            store.save()
+        except Exception as exc:  # pragma: no cover - defensive persistence path
+            logger.warning("Failed to persist inferred commit metadata: %s", exc)
 
     return rows
 
