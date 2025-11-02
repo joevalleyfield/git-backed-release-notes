@@ -137,3 +137,38 @@ def step_assert_release_detail_note_heading(context, heading):
     response = context.release_detail_response
     assert response.status_code == 200, f"Unexpected status {response.status_code}: {response.text}"
     assert_that(response.text, contains_string(heading))
+
+
+@then('the release detail should show summary "{summary_text}"')
+def step_assert_release_summary(context, summary_text):
+    soup: BeautifulSoup = context.release_detail_soup
+    summary = soup.select_one("[data-test='release-summary']")
+    assert summary is not None, "Expected a release summary element"
+    actual = summary.get_text(strip=True)
+    assert_that(actual, equal_to(summary_text))
+
+
+@then("release issues should link to their detail pages")
+def step_assert_release_issue_links(context):
+    soup: BeautifulSoup = context.release_detail_soup
+    rows = soup.select("[data-test='release-issue']")
+    assert rows, "Expected issues to be listed in the release detail"
+    for row in rows:
+        slug = row.get("data-slug")
+        link = row.select_one("a[data-test='release-issue-link']")
+        assert link is not None, f"Expected an issue link for {slug}"
+        href = link.get("href", "")
+        assert href == f"/issue/{slug}", f"Expected issue link href '/issue/{slug}', saw '{href}'"
+
+
+@then("release commits should link to their detail pages")
+def step_assert_release_commit_links(context):
+    soup: BeautifulSoup = context.release_detail_soup
+    rows = soup.select("[data-test='release-commit']")
+    assert rows, "Expected commits to be listed in the release detail"
+    for row in rows:
+        short_sha = row.get("data-sha")
+        link = row.select_one("a[data-test='release-commit-link']")
+        assert link is not None, f"Expected a commit link for {short_sha}"
+        href = link.get("href", "")
+        assert_that(href, contains_string("/commit/"))

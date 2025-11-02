@@ -45,6 +45,12 @@
     <header class="mb-4">
       <p class="text-muted mb-1">Release</p>
       <h1 class="h3 mb-0" data-test="release-heading">{{ release["slug"] }}</h1>
+      <p class="text-muted" data-test="release-summary">{{ summary["text"] }}</p>
+      {% if summary["latest_commit"] %}
+      <p class="text-muted small mb-0">
+        Latest commit: {{ summary["latest_commit"] }}{% if summary["earliest_commit"] and summary["earliest_commit"] != summary["latest_commit"] %} · Earliest commit: {{ summary["earliest_commit"] }}{% end %}
+      </p>
+      {% end %}
     </header>
 
     <section class="mb-5">
@@ -56,7 +62,11 @@
           {% for issue in issues %}
           <article class="list-group-item" data-test="release-issue" data-slug="{{ issue.slug }}">
             <header class="d-flex align-items-center justify-content-between">
-              <h3 class="h5 mb-0">{{ issue.title or issue.slug }}</h3>
+              <h3 class="h5 mb-0">
+                <a class="link-underline link-underline-opacity-0" data-test="release-issue-link" href="/issue/{{ issue.slug }}">
+                  {{ issue.title or issue.slug }}
+                </a>
+              </h3>
               <span class="badge text-bg-secondary" data-test="release-issue-status">
                 {{ issue.status or "unknown" }}
               </span>
@@ -86,7 +96,11 @@
             <tbody>
               {% for commit in commits %}
               <tr data-test="release-commit" data-sha="{{ commit.short_sha }}">
-                <td><code>{{ commit.short_sha }}</code></td>
+                <td>
+                  <a data-test="release-commit-link" href="/commit/{{ commit.sha }}">
+                    <code>{{ commit.short_sha }}</code>
+                  </a>
+                </td>
                 <td>{{ commit.subject }}</td>
                 <td class="text-nowrap">{{ commit.author_date }}</td>
                 <td>{{ commit.issue }}</td>

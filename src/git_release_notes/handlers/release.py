@@ -38,6 +38,26 @@ class ReleaseIssue:
     path: Path | None
 
 
+def _format_count(label: str, count: int) -> str:
+    suffix = "s" if count != 1 else ""
+    return f"{count} {label}{suffix}"
+
+
+def _build_summary(issue_entries: list[ReleaseIssue], commits: list[ReleaseCommit]) -> dict:
+    issue_count = len(issue_entries)
+    commit_count = len(commits)
+    latest_commit = commits[0].author_date if commits else None
+    earliest_commit = commits[-1].author_date if commits else None
+
+    return {
+        "issue_count": issue_count,
+        "commit_count": commit_count,
+        "latest_commit": latest_commit,
+        "earliest_commit": earliest_commit,
+        "text": f"{_format_count('issue', issue_count)} • {_format_count('commit', commit_count)}",
+    }
+
+
 def _extract_heading(markdown: str) -> str | None:
     """Return the first Markdown heading, if present."""
     for line in markdown.splitlines():
@@ -189,9 +209,12 @@ class ReleaseDetailHandler(RequestHandler):
 
         commits.sort(key=lambda commit: commit.author_date, reverse=True)
 
+        summary = _build_summary(issue_entries, commits)
+
         self.render(
             "release-detail.html",
             release={"slug": release_slug},
             issues=issue_entries,
             commits=commits,
+            summary=summary,
         )
