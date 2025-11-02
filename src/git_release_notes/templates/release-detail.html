@@ -51,6 +51,24 @@
         Latest commit: {{ summary["latest_commit"] }}{% if summary["earliest_commit"] and summary["earliest_commit"] != summary["latest_commit"] %} · Earliest commit: {{ summary["earliest_commit"] }}{% end %}
       </p>
       {% end %}
+      {% if tag_metadata %}
+      <p class="text-muted small mb-0" data-test="release-tag-metadata">
+        {% if tag_metadata["direct"] %}
+          Tag <code>{{ tag_metadata["tag"] }}</code> points at commit <code>{{ tag_metadata["short_sha"] }}</code>.
+        {% else %}
+          {% if tag_metadata["previous"] %}
+            Previous tag <code>{{ tag_metadata["previous"] }}</code>
+            {% if tag_metadata["previous_count"] is not None %}
+              ({{ tag_metadata["previous_count"] }} commits back)
+            {% end %}
+          {% end %}
+          {% if tag_metadata["previous"] and tag_metadata["next"] %} · {% end %}
+          {% if tag_metadata["next"] %}
+            Next tag <code>{{ tag_metadata["next"] }}</code>.
+          {% end %}
+        {% end %}
+      </p>
+      {% end %}
     </header>
 
     <section class="mb-5">

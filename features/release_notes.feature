@@ -28,3 +28,4 @@ Feature: Release notes browsing
     And the release detail should show summary "1 issue • 1 commit"
     And release issues should link to their detail pages
     And release commits should link to their detail pages
+    And the release detail should surface tag metadata

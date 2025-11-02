@@ -172,3 +172,13 @@ def step_assert_release_commit_links(context):
         assert link is not None, f"Expected a commit link for {short_sha}"
         href = link.get("href", "")
         assert_that(href, contains_string("/commit/"))
+
+
+@then("the release detail should surface tag metadata")
+def step_assert_release_tag_metadata(context):
+    soup: BeautifulSoup = context.release_detail_soup
+    element = soup.select_one("[data-test='release-tag-metadata']")
+    assert element is not None, "Expected tag metadata to be displayed"
+    text = element.get_text(strip=True)
+    assert text, "Tag metadata element should not be empty"
+    assert "rel-0.1" in text, f"Expected tag metadata to mention rel-0.1, saw '{text}'"

@@ -15,7 +15,12 @@ from typing import Iterable
 
 from tornado.web import HTTPError, RequestHandler
 
-from ..utils.git import run_git
+from ..utils.git import (
+    find_follows_tag,
+    find_precedes_tag,
+    get_matching_tag_commits,
+    run_git,
+)
 from .issue import find_issue_file
 
 logger = logging.getLogger(__name__)
@@ -55,6 +60,46 @@ def _build_summary(issue_entries: list[ReleaseIssue], commits: list[ReleaseCommi
         "latest_commit": latest_commit,
         "earliest_commit": earliest_commit,
         "text": f"{_format_count('issue', issue_count)} • {_format_count('commit', commit_count)}",
+    }
+
+
+def _resolve_tag_metadata(
+    repo_path: Path,
+    commits: list[ReleaseCommit],
+    tag_pattern: str,
+) -> dict | None:
+    if not commits:
+        return None
+
+    repo = str(repo_path)
+    sha = commits[0].sha
+    short_sha = commits[0].short_sha
+
+    tag_map = get_matching_tag_commits(repo, tag_pattern)
+    direct_tag = tag_map.get(sha)
+    if direct_tag:
+        return {
+            "direct": True,
+            "tag": direct_tag,
+            "short_sha": short_sha,
+            "previous": None,
+            "previous_count": None,
+            "next": None,
+        }
+
+    previous = find_follows_tag(sha, repo, tag_pattern)
+    next_tag = find_precedes_tag(sha, repo, tag_pattern)
+
+    if previous is None and next_tag is None:
+        return None
+
+    return {
+        "direct": False,
+        "tag": None,
+        "short_sha": short_sha,
+        "previous": previous.base_tag if previous else None,
+        "previous_count": getattr(previous, "count", None) if previous else None,
+        "next": next_tag.base_tag if next_tag else None,
     }
 
 
@@ -181,6 +226,7 @@ class ReleaseDetailHandler(RequestHandler):
         store = self.application.settings.get("commit_metadata_store")
         repo_path: Path = self.application.settings.get("repo_path")
         issues_dir: Path = self.application.settings.get("issues_dir")
+        tag_pattern: str = self.application.settings.get("tag_pattern", "rel-*")
 
         try:
             store.reload()
@@ -210,6 +256,7 @@ class ReleaseDetailHandler(RequestHandler):
         commits.sort(key=lambda commit: commit.author_date, reverse=True)
 
         summary = _build_summary(issue_entries, commits)
+        tag_metadata = _resolve_tag_metadata(repo_path, commits, tag_pattern)
 
         self.render(
             "release-detail.html",
@@ -217,4 +264,5 @@ class ReleaseDetailHandler(RequestHandler):
             issues=issue_entries,
             commits=commits,
             summary=summary,
+            tag_metadata=tag_metadata,
         )
