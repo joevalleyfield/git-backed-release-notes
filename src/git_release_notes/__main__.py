@@ -21,6 +21,7 @@ from .handlers.debug import GitStatsHandler
 from .handlers.issue import IssueDetailHandler, IssueUpdateHandler
 from .handlers.issue_index import IssueIndexHandler
 from .handlers.main import MainHandler
+from .handlers.release import ReleaseDetailHandler, ReleaseIndexHandler
 from .handlers.update import UpdateCommitHandler
 from .utils.metadata_store import (
     DataFrameCommitMetadataStore,
@@ -98,6 +99,8 @@ def make_app(
             (r"/issues", IssueIndexHandler),
             (r"/issue/([^/]+)/update", IssueUpdateHandler),
             (r"/issue/([^/]+)", IssueDetailHandler),
+            (r"/releases", ReleaseIndexHandler),
+            (r"/release/([^/]+)", ReleaseDetailHandler),
             (r"/_debug/git-stats", GitStatsHandler),
         ],
         template_path=str(TEMPLATE_DIR),
