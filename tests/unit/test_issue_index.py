@@ -121,12 +121,9 @@ def test_collect_issue_index_rows_falls_back_to_commit_author_date(tmp_path):
     env["GIT_COMMITTER_DATE"] = commit_time
     subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=repo_root, check=True, env=env)
 
-    sha = (
-        subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=repo_root, check=True, text=True, capture_output=True
-        )
-        .stdout.strip()
-    )
+    sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo_root, check=True, text=True, capture_output=True
+    ).stdout.strip()
 
     metadata_path = repo_root / "git-view.metadata.csv"
     write_csv(metadata_path, "sha,issue,release", [f"{sha},alpha,"])
@@ -179,12 +176,9 @@ def test_collect_issue_index_rows_persists_inferred_commits(tmp_path):
     env["GIT_COMMITTER_DATE"] = landing_iso
     subprocess.run(["git", "commit", "-m", f"Tweak {slug}"], cwd=repo_root, check=True, env=env)
 
-    sha = (
-        subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=repo_root, check=True, text=True, capture_output=True
-        )
-        .stdout.strip()
-    )
+    sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo_root, check=True, text=True, capture_output=True
+    ).stdout.strip()
 
     store = DataFrameCommitMetadataStore(repo_root / "git-view.metadata.csv")
     rows = collect_issue_index_rows(repo_root, issues_root, store)

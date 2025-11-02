@@ -78,7 +78,7 @@ def _git_last_updated(repo_root: Path, issue_path: Path) -> datetime | None:
     """Lookup the last commit timestamp that touched the given issue file."""
     rel_path = issue_path.relative_to(repo_root)
     try:
-        result = run_git(repo_root, "log", "-1", "--format=%cI", str(rel_path), check=True)
+        result = run_git(str(repo_root), "log", "-1", "--format=%cI", str(rel_path), check=True)
     except Exception as exc:  # broad: git may not know about the file yet
         logger.debug("git log failed for %s: %s", rel_path, exc)
         return None
@@ -286,9 +286,7 @@ def collect_issue_index_rows(
         if not commit_shas:
             if scanned_commits is None:
                 scanned_commits = _scan_repo_commits(repo_root)
-            inferred_shas, newest_ts, updated = _infer_issue_commits(
-                slug, repo_root, store, scanned_commits
-            )
+            inferred_shas, newest_ts, updated = _infer_issue_commits(slug, repo_root, store, scanned_commits)
             if inferred_shas:
                 commit_shas.update(inferred_shas)
                 inferred_timestamp = newest_ts

@@ -42,9 +42,7 @@ def _should_use_local_assets(env_value: str | None) -> bool:
     return env_value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _install_signal_handlers(
-    loop: IOLoop, *, signals_to_handle: Iterable[int] | None = None
-) -> None:
+def _install_signal_handlers(loop: IOLoop, *, signals_to_handle: Iterable[int] | None = None) -> None:
     """Arrange for the given loop to stop when termination signals arrive."""
 
     if signals_to_handle is None:

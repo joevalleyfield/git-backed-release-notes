@@ -201,10 +201,7 @@ class ReleaseIndexHandler(RequestHandler):
 
         release_rows = []
         for release_slug, bucket in sorted(releases.items()):
-            issue_entries = [
-                _load_issue_entry(slug, issues_dir)
-                for slug in sorted(bucket["issues"])
-            ]
+            issue_entries = [_load_issue_entry(slug, issues_dir) for slug in sorted(bucket["issues"])]
             release_rows.append(
                 {
                     "slug": release_slug,
