@@ -46,6 +46,7 @@ Feature: Issue-centric browsing index
   Scenario: Issue index provides global commit navigation
     When the user visits the issue index
     Then the header should link to the commit index
+    And the header should link to the release index
     And issue rows should not include commit navigation links
 
   Scenario: Last Landed derives from inferred commits

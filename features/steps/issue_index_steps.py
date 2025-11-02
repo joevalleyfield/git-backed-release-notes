@@ -207,10 +207,19 @@ def step_assert_issue_subset(context):
 @then("the header should link to the commit index")
 def step_assert_header_commit_link(context):
     soup: BeautifulSoup = context.issue_index_soup
-    link = soup.select_one("a[data-test='issues-commit-index-link']")
+    link = soup.select_one("a[data-test='nav-commits']")
     assert link is not None, "Expected header commit index link"
     href = link.get("href", "")
     assert href == "/", f"Expected commit index link to '/', saw '{href}'"
+
+
+@then("the header should link to the release index")
+def step_assert_header_release_link(context):
+    soup: BeautifulSoup = context.issue_index_soup
+    link = soup.select_one("a[data-test='nav-releases']")
+    assert link is not None, "Expected header release index link"
+    href = link.get("href", "")
+    assert href == "/releases", f"Expected release index link to '/releases', saw '{href}'"
 
 
 @then("issue rows should not include commit navigation links")

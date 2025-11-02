@@ -80,15 +80,22 @@
   </style>
 </head>
 <body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/" data-test="nav-commits">Commits</a>
+      <div class="navbar-nav">
+        <span class="nav-link active fw-semibold" aria-current="page" data-test="nav-issues">Issues</span>
+        <a class="nav-link" href="/releases" data-test="nav-releases">Releases</a>
+      </div>
+    </div>
+  </nav>
+
   <main class="container py-4">
     <header class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-4">
       <div>
         <h1 class="h4 mb-2">Issue Index</h1>
         <p class="text-muted mb-0">Scan open and closed issues by recency or landing history.</p>
       </div>
-      <nav class="d-flex flex-wrap gap-2 align-items-center">
-        <a class="btn btn-outline-secondary btn-sm" href="/" data-test="issues-commit-index-link">Commit index</a>
-      </nav>
       <div class="issue-filters d-flex gap-2 flex-wrap">
         <div class="btn-group" role="group" aria-label="Sort issues">
           {% for option in sort_options %}
